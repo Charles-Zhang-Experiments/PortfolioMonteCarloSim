@@ -4,4 +4,25 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="OfflineSources\SPY.csv" />
+    <None Remove="OfflineSources\USD=CAD.csv" />
+    <None Remove="OfflineSources\XIU.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="OfflineSources\SPY.csv" />
+    <EmbeddedResource Include="OfflineSources\USD=CAD.csv" />
+    <EmbeddedResource Include="OfflineSources\XIU.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DataTypes\" />
+    <Folder Include="Algorithm\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Csv" Version="2.0.80" />
+  </ItemGroup>
+
 </Project>

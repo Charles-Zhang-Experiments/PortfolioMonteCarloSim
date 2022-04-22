@@ -23,6 +23,18 @@ An interactive single-page Blazor web app that allows construct and analysis of 
 
 This can be further improved with more sophisticated background worker management when risk data gets large.
 
-## Data Source (Folder)
+## Offline Data Sources (Folder)
 
-This folder contains some sample data, it's not used by code.
+This folder contains some sample data, it's used for the first question and offline access of some data.
+
+Notice due to restrictions of Yahoo Finance API and since I can't post my personal access codes in public, there may be issues with fetching data.
+
+Notce iShare (XIU) is in CAD while SPY is in USD.
+
+Notice both the offline data and API data can have missing dates, or otherwise contain mismatching numbers of rows - they need to be cleaned for alignment and contains matching number of rows before using.
+
+# Question 2
+
+## Methodology
+
+1. Data needs clean up, some are filled for missing data.

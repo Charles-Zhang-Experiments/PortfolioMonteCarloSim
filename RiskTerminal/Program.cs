@@ -91,7 +91,15 @@ namespace RiskTerminal
 
         static void Run(AnalysisConfig config)
         {
-            new PortfolioAnalyzer().Run(config);
+            try
+            {
+                new PortfolioAnalyzer().Run(config);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"An error occured during analysis.");
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }
