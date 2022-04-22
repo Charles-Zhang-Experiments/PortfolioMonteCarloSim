@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OTPPInterview2022
+namespace RiskTerminal
 {
     class Program
     {

@@ -338,4 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Specific Files
 interview questions.pdf
+interview questions (Review).pdf
