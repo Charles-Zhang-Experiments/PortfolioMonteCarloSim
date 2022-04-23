@@ -8,12 +8,19 @@ using System.Text;
 
 namespace PortfolioRisk.Core.DataSourceService
 {
+    public enum YahooTimeInterval
+    {
+        Month,
+        Day,
+        Week,
+        Year
+    }
     public class YahooFinanceParameter
     {
         public string InputSymbol { get; set; }
         public DateTime InputStartDate { get; set; }
         public DateTime InputEndDate { get; set; }
-        public string InputInterval { get; set; }
+        public YahooTimeInterval InputInterval { get; set; }
         public DataGrid OutputTable { get; set; }
     }
 
@@ -33,12 +40,13 @@ namespace PortfolioRisk.Core.DataSourceService
             {
                 // Tiemzone info: https://stackoverflow.com/questions/5996320/net-timezoneinfo-from-olson-time-zone
                 // { "America/New_York", "Eastern Standard Time" },
-                var americaNewYorkTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-                var newYorkTime = TimeZoneInfo.ConvertTimeFromUtc(input.AddDays(1), americaNewYorkTimeZone);
+                TimeZoneInfo americaNewYorkTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                DateTime newYorkTime = TimeZoneInfo.ConvertTimeFromUtc(input.AddHours(-4), americaNewYorkTimeZone);
                 string timeStamp = ((DateTimeOffset)newYorkTime).ToUnixTimeSeconds().ToString();
                 return timeStamp;   // TODO: NOT WORKING
-                /*Test Info:
+                /*Test Info: (Conclusion: EST time, only 0:00 at EST)
                  Test date: 2014/01/28-2022/04/07
+Toronto (Jerry Sun): https://query1.finance.yahoo.com/v7/finance/download/AAPL?period1=1390885200&period2=1649304000&interval=1mo&events=history&includeAdjustedClose=true
 UTC: https://query1.finance.yahoo.com/v7/finance/download/AAPL?period1=1390896000&period2=1649314800&interval=1m&events=history&includeAdjustedClose=true
 UTC to Eastern: https://query1.finance.yahoo.com/v7/finance/download/AAPL?period1=1390878000&period2=1649300400&interval=1m&events=history&includeAdjustedClose=true
 UTC+1 to Eastern: https://query1.finance.yahoo.com/v7/finance/download/AAPL?period1=1390964400&period2=1649386800&interval=1m&events=history&includeAdjustedClose=true
@@ -49,12 +57,12 @@ America/New_York*/
             string RemapSymbols(string original)
                 => Remapping.ContainsKey(original) ? Remapping[original] : original;
 
-            Dictionary<string, string> validIntervals = new Dictionary<string, string>()
+            Dictionary<YahooTimeInterval, string> validIntervals = new Dictionary<YahooTimeInterval, string>()
             {
-                {"month", "1m"},
-                {"day", "1d"},
-                {"week", "1w"},
-                {"year", "1y"},
+                {YahooTimeInterval.Month, "1mo"},
+                {YahooTimeInterval.Day, "1d"},
+                {YahooTimeInterval.Week, "1w"},
+                {YahooTimeInterval.Year, "1y"},
             };
             if (parameter.InputStartDate > parameter.InputEndDate)
                 throw new ArgumentException("Wrong date.");
@@ -62,12 +70,10 @@ America/New_York*/
                 throw new ArgumentException("Wrong date.");
             if (parameter.InputSymbol.Length > 7)
                 throw new ArgumentException("Wrong symbol.");
-            if (!validIntervals.Keys.Contains(parameter.InputInterval.ToLower()))
-                throw new ArgumentException("Wrong interval.");
 
             string startTime = ConvertTimeFormat(parameter.InputStartDate);
             string endTime = ConvertTimeFormat(parameter.InputEndDate);
-            string interval = validIntervals[parameter.InputInterval.ToLower()];
+            string interval = validIntervals[parameter.InputInterval];
             string csvUrl =
                 $"https://query1.finance.yahoo.com/v7/finance/download/{RemapSymbols(parameter.InputSymbol)}?period1={startTime}&period2={endTime}&interval={interval}&events=history&includeAdjustedClose=true";
             string csvText = new WebClient().DownloadString(csvUrl);

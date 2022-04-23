@@ -52,7 +52,7 @@ namespace PortfolioRisk.Core
                 YahooFinanceParameter parameter = new YahooFinanceParameter()
                 {
                     InputSymbol = symbol,
-                    InputInterval = "day",
+                    InputInterval = YahooTimeInterval.Day,
                     InputStartDate = new DateTime(2016, 12, 31),
                     InputEndDate = new DateTime(2021, 12, 31),
                 };
