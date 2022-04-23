@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiskTerminal", "RiskTermina
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioBuilderWebApp", "PortfolioBuilderWebApp\PortfolioBuilderWebApp.csproj", "{22580884-9F48-46B2-9DC1-8609AB0D87FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChartViewer", "ChartViewer\ChartViewer.csproj", "{4FCFC11C-81B4-422F-A082-9F05A79DB99D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{22580884-9F48-46B2-9DC1-8609AB0D87FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22580884-9F48-46B2-9DC1-8609AB0D87FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22580884-9F48-46B2-9DC1-8609AB0D87FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FCFC11C-81B4-422F-A082-9F05A79DB99D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FCFC11C-81B4-422F-A082-9F05A79DB99D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FCFC11C-81B4-422F-A082-9F05A79DB99D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FCFC11C-81B4-422F-A082-9F05A79DB99D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

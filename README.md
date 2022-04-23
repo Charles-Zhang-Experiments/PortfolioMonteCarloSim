@@ -9,6 +9,18 @@ There are two complications in the overall solution (e.g. for Question 1):
 1. Data downloading and preprocessing: For manual operations one can download CSV files from the web and manually clean up the data for missing entries and mis-matching dates, but for generic general-purpose API-based data source, the program must be smart enough to automatically handle errors in data. This part of code is mostly done inside `PortfolioAnalyzer` class.
 2. Data simulation and processing: When proper data is fetched and ready for processing, the actual simulation is quite trivial; This is done with the help of classes inside `Algorithm` namespace.
 
+## How to Run
+
+For compiling and run:
+
+1. Open *OTPPInterview2022.sln* in Visual Studio or Rider
+2. Set *RiskTerminal* or *PortfolioBuilderWebApp* as starting project
+3. Press *F5* to run
+
+For quick online test:
+
+* Go to https://totalimagine.com/risk, it provides the examples in Question 1 as preset
+
 # Software Components
 
 The whole solution is written entirely in C# (with some JavaScript and HTML), and is divided into three parts: 

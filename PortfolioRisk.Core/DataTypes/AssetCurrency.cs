@@ -2,8 +2,10 @@
 {
     public enum AssetCurrency
     {
+        // Currencies
         CAD,
         USD,
-        CONVERTER_TO_CAD, // Exchange rates
+        // Exchange rates
+        USD_TO_CAD,
     }
 }

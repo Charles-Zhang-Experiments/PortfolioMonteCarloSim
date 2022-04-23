@@ -1,0 +1,19 @@
+﻿<Window x:Class="ChartViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        xmlns:local="clr-namespace:ChartViewer"
+        mc:Ignorable="d"
+        Title="{Binding Test}" Height="450" Width="800"
+        DataContext="{Binding RelativeSource={RelativeSource self}}">
+    <Grid>
+        <DockPanel LastChildFill="True">
+            <ComboBox DockPanel.Dock="Top" Margin="5" 
+                      ItemsSource="{Binding SeriesNames}"
+                      SelectionChanged="Selector_OnSelectionChanged"/>
+            <lvc:CartesianChart Series="{Binding Series}"/>
+        </DockPanel>
+    </Grid>
+</Window>

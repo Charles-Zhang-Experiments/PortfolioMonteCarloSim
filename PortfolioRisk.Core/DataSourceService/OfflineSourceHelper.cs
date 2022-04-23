@@ -21,7 +21,7 @@ namespace PortfolioRisk.Core.DataSourceService
         {
             {"SPY", AssetCurrency.USD},
             {"XIU", AssetCurrency.CAD},
-            {"USD/CAD", AssetCurrency.CONVERTER_TO_CAD},
+            {"USD/CAD", AssetCurrency.USD_TO_CAD},
         };
         #endregion
 

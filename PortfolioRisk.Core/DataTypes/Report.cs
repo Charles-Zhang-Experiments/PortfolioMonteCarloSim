@@ -1,11 +1,22 @@
-﻿namespace PortfolioRisk.Core.DataTypes
+﻿using System.Collections.Generic;
+
+namespace PortfolioRisk.Core.DataTypes
 {
-    public struct Report
+    public class PnL
+    {
+        public string Asset { get; set; }
+        /// <summary>
+        /// 5000*260 PnL
+        /// </summary>
+        public double[][] Values { get; set; }
+    }
+    
+    public class Report
     {
         /// <summary>
-        /// Number in CAD or % return
+        /// Number in CAD
         /// </summary>
-        public double PortfolioReturn { get; set; }
+        public List<PnL> PortfolioReturn { get; set; } = new List<PnL>();
         
         /// <summary>
         /// Tail risk at terminal point at Day 260 with 1% ETL

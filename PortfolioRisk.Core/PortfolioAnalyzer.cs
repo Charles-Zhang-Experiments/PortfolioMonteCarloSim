@@ -37,13 +37,13 @@ namespace PortfolioRisk.Core
             
             // Reporting
             var reporter = new Reporter(results);
-            Report report = reporter.BuildReport(AnnotateAssetCurrency(config));
-            reporter.AnnouceReport(report);
+            Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
+            reporter.AnnounceReport(report);
         }
         #endregion
 
         #region Configurations
-        private const int SimulationIterations = 5000;
+        public const int SimulationIterations = 5000;
         #endregion
 
         #region Routines
