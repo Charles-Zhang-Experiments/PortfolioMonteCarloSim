@@ -13,36 +13,69 @@ namespace PortfolioRisk.Core.Algorithm
         {
             RawData = rawData;
             ReturnData = ComputeReturn(rawData);
+            
+            // Some basic data validation
+            MinDate = RawData.Values.First().First().Date;
+            MaxDate = RawData.Values.First().Last().Date;
+            if (MaxDate < MinDate)
+                throw new InvalidDataException("Wrong date range for time series.");
+            if (RawData.Any(d => d.Value.First().Date != MinDate || d.Value.Last().Date != MaxDate))
+                throw new InvalidDataException("Mismatching range for time series.");
         }
         #endregion
 
         #region Constants
-        private const int QuarterDays = 66;
-        private const int QuarterReturnDays = 65;
+        public const int QuarterDays = 66;
+        public const int QuarterReturnDays = 65;
+        public const int YearReturnDays = QuarterReturnDays * 4; 
         #endregion
 
         #region Private Members
         private readonly Random _randomGenerator = new Random();
+        private DateTime MaxDate { get; }
+        private DateTime MinDate { get; }
         private Dictionary<string,List<TimeSeries>> RawData { get; }
         private Dictionary<string,List<TimeSeries>> ReturnData { get; }
         #endregion
 
         #region Interface Method
-        public void Simulate(AnalysisConfig config)
+        public Dictionary<string, double[]> SimulateOnce(Dictionary<string, double> currentPrices)
         {
-            // Some basic data validation
-            DateTime min = RawData.Values.First().First().Date;
-            DateTime max = RawData.Values.First().Last().Date;
-            if (max < min)
-                throw new InvalidDataException("Wrong date range for time series.");
-            if (RawData.Any(d => d.Value.First().Date != min || d.Value.Last().Date != max))
-                throw new InvalidDataException("Mismatching range for time series.");
-            
             // Randomly pick 4 quarters of historical data
-            DateTime[][] startDates = Enumerable.Range(0, 4)
-                .Select(_ => PickRandomDate(min, max.AddDays(-QuarterDays)))
-                .Select(randomStart => PortfolioAnalyzer.GetWorkDays(randomStart, randomStart.AddDays(QuarterDays)))
+            DateTime[] startDates = Enumerable.Range(0, 4)
+                .Select(_ => PickRandomDate(MinDate, MaxDate.AddDays(-QuarterDays)))
                 .ToArray();
+            // Select return time series and stitch
+            Dictionary<string, TimeSeries[]> stitchReturns = 
+                ReturnData.ToDictionary(rd => rd.Key, rd => 
+                    startDates
+                        .SelectMany(
+                            sd => 
+                                rd.Value
+                                    .Skip(rd.Value.FindIndex(ts => ts.Date == sd))
+                                    .Take(QuarterReturnDays))
+                        .ToArray());
+            
+            // Validation Assertion
+            if (stitchReturns.Any(sr => sr.Value.Length != YearReturnDays))
+                throw new InvalidOperationException("Unexpected stitching result.");
+
+            // Simulate price path
+            Dictionary<string, double[]> simulatedPaths = stitchReturns.ToDictionary(sr => sr.Key, sr =>
+            {
+                double currentPrice = currentPrices[sr.Key];
+                List<double> path = new List<double>() { currentPrice };
+                sr.Value.Aggregate(currentPrice,
+                    (agg, ts) =>
+                    {
+                        var accu = agg * ts.Value;
+                        path.Add(accu);
+                        return accu;
+                    });
+                return path.ToArray();
+            });
+
+            return simulatedPaths;
         }
         #endregion
 
@@ -63,7 +96,9 @@ namespace PortfolioRisk.Core.Algorithm
                 List<TimeSeries> newSeries = new List<TimeSeries>();
                 for (int i = valueSeries.Count - 1; i > 0; i--)
                 {
-                    resultColumn.Add((sourceColumn[i] - sourceColumn[i-1]) / sourceColumn[i-1]);
+                    DateTime date = valueSeries[i].Date;
+                    double value = (valueSeries[i].Value - valueSeries[i - 1].Value) / valueSeries[i - 1].Value;
+                    newSeries.Add(new TimeSeries(date, value));
                 }
                 
                 result.Add(ticker, newSeries);

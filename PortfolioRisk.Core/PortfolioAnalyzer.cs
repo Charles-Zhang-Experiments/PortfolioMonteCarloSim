@@ -23,11 +23,25 @@ namespace PortfolioRisk.Core
             // Yahoo Finance returns data with incomplete entries and sometimes wrong range of date;
             // So we need to pre-process and clean data
             // (unify dates, and fill in missing data for all weekdays, then we get matching number of rows)
-            Dictionary<string, List<TimeSeries>> result = CleanupData();
-            
+            Dictionary<string, List<TimeSeries>> timeSeries = CleanupData();
+
             // Perform the actual simulation and analysis
-            new HistoricalSimulation(result).Simulate(config);
+            HistoricalSimulation simulator = new HistoricalSimulation(timeSeries);
+            List<Dictionary<string, double[]>> results = Enumerable.Range(0, SimulationIterations)
+                .Select(_ => simulator.SimulateOnce(GetCurrentPrices(config))).ToList();
+            
+            // Validation Asserts
+            if (results.Count() != SimulationIterations ||
+                results.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
+                throw new InvalidOperationException("Unexpected simulation outcome.");
+            
+            // Reporting
+            Report report = new Reporter(results).MakeReport();
         }
+        #endregion
+
+        #region Configurations
+        private const int SimulationIterations = 5000;
         #endregion
 
         #region Routines
@@ -42,6 +56,12 @@ namespace PortfolioRisk.Core
                 table.Sort(table.Columns.First().Header, false);
                 TimeSeries[symbol] = table;
             }
+        }
+        private Dictionary<string, double> GetCurrentPrices(AnalysisConfig config)
+        {
+            Dictionary<string, double> currentPrices =
+                config.Assets.Union(config.Factors).ToDictionary(s => s, GetCurrentPrice);
+            return currentPrices;
         }
         private Dictionary<string, List<TimeSeries>> CleanupData()
         {
@@ -116,6 +136,22 @@ namespace PortfolioRisk.Core
                 YahooFinanceHelper.GetHistorical(parameter);
                 return parameter.OutputTable;
             }
+        }
+        
+        private double GetCurrentPrice(string symbol)
+        {
+            YahooFinanceParameter parameter = new YahooFinanceParameter()
+            {
+                InputSymbol = symbol,
+                InputInterval = YahooTimeInterval.Day,
+                InputStartDate = DateTime.Now.Date.AddDays(-2),
+                InputEndDate = DateTime.Now.Date.AddDays(1),
+            };
+            YahooFinanceHelper.GetHistorical(parameter);
+
+            // Get the latest (Yahoo returns the latest at first row)
+            DataColumn column = parameter.OutputTable.Columns[4];
+            return column[0];
         }
 
         /// <summary>
