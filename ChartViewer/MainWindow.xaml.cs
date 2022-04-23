@@ -62,7 +62,8 @@ namespace ChartViewer
             {
                 Values = s,
                 Fill = null,
-                Name = name
+                Name = name,
+                GeometrySize = 2
             }).ToArray();
         }
         #endregion

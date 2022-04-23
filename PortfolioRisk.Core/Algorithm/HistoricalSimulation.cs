@@ -101,7 +101,7 @@ namespace PortfolioRisk.Core.Algorithm
                 for (int i = valueSeries.Count - 1; i > 0; i--)
                 {
                     DateTime date = valueSeries[i].Date;
-                    double value = (valueSeries[i].Value - valueSeries[i - 1].Value) / valueSeries[i - 1].Value;
+                    double value = valueSeries[i].Value / valueSeries[i - 1].Value;
                     newSeries.Add(new TimeSeries(date, value));
                 }
                 
