@@ -28,11 +28,9 @@ namespace PortfolioRisk.Core.DataSourceService
         #region Interface Methods
         public DataGrid GetSymbol(SymbolDefinition symbol)
         {
-            string name = RemapSymbols(symbol.Name);
-            
-            if (OfflineSources.Contains(name))
+            if (OfflineSources.Contains(symbol.Name))
             {
-                string csvText = ReadTextResource($"PortfolioRisk.Core.OfflineSources.{symbol}.csv");
+                string csvText = ReadTextResource($"PortfolioRisk.Core.OfflineSources.{RemapSymbols(symbol.Name)}.csv");
                 IEnumerable<ICsvLine> csv = CsvReader.ReadFromText(csvText, new CsvOptions()
                 {
                     HeaderMode = HeaderMode.HeaderPresent

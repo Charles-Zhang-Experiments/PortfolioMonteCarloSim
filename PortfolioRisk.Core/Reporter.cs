@@ -10,14 +10,16 @@ namespace PortfolioRisk.Core
     public class Reporter
     {
         #region Constructor
-        public Reporter(List<Dictionary<string,double[]>> results)
+        public Reporter(List<Dictionary<string, double[]>> results, Dictionary<string, double> currentPrices)
         {
             SimulationResults = results;
+            CurrentPrices = currentPrices;
         }
         #endregion
 
         #region Private Members
         private List<Dictionary<string,double[]>> SimulationResults { get; }
+        private Dictionary<string, double> CurrentPrices { get; }
         #endregion
 
         #region Public Interface Method
@@ -28,22 +30,31 @@ namespace PortfolioRisk.Core
             
             NormalizeCurrencyForPnL(analysisConfig, annotateAssetCurrency, report);
             ComputeETL(report);
+            ComputeMaxETL(report);
 
             return report;
         }
         public void AnnounceReport(Report report)
         {
             // Basic stats
-            new App(report.PortfolioReturn.ToDictionary(pr => pr.Asset, pr => pr.Values)).Run();
             Console.WriteLine($"ETL: {report.ETL}");
             Console.WriteLine($"Max ETL: {report.MaxETL}");
+            // Path visualization
+            App app = new App(report.PortfolioReturn.ToDictionary(pr => pr.Asset, pr => pr.Values.Take(1).ToArray()));
+            app.Run(new MainWindow());
         }
         #endregion
 
         #region Routines
         private void ComputeETL(Report report)
         {
-            throw new NotImplementedException();
+            report.ETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
+                pnl.Values.Select(pv => pv.Last()).OrderBy(d => d).Take(PortfolioAnalyzer.ETLWorstCaseTake).Average() * CurrentPrices[pnl.Asset]);
+        }
+        private void ComputeMaxETL(Report report)
+        {
+            report.MaxETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
+                pnl.Values.Select(pv => pv.Min()).OrderBy(d => d).Take(PortfolioAnalyzer.ETLWorstCaseTake).Average() * CurrentPrices[pnl.Asset]);
         }
         private void NormalizeCurrencyForPnL(AnalysisConfig analysisConfig, Dictionary<string, AssetCurrency> annotateAssetCurrency, Report report)
         {
@@ -60,7 +71,7 @@ namespace PortfolioRisk.Core
                     double[][] exchangeRate = SimulationResults.Select(sr => sr[converter]).ToArray();
 
                     // Convert to CAD
-                    pnl = ElementWiseMultiply(pnl, exchangeRate);
+                    pnl = ElementWiseMultiply(pnl, exchangeRate, CurrentPrices[converter]);
                 }
 
                 report.PortfolioReturn.Add(new PnL()
@@ -73,7 +84,7 @@ namespace PortfolioRisk.Core
         #endregion
 
         #region Helpers
-        private double[][] ElementWiseMultiply(double[][] pnl, double[][] exchangeRate)
+        private double[][] ElementWiseMultiply(double[][] pnl, double[][] exchangeRate, double currencyBaseRate)
         {
             if (pnl.Length != exchangeRate.Length
                 || pnl.First().Length != exchangeRate.First().Length)
@@ -89,7 +100,7 @@ namespace PortfolioRisk.Core
             {
                 for (int day = 0; day < pnl.First().Length; day++)
                 {
-                    result[scenario][day] = pnl[scenario][day] * exchangeRate[scenario][day];
+                    result[scenario][day] = pnl[scenario][day] * exchangeRate[scenario][day] * currencyBaseRate;
                 }
             }
 

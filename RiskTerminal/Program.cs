@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ChartViewer;
 using PortfolioRisk.Core.DataSourceService;
 
 namespace RiskTerminal
@@ -19,6 +20,7 @@ namespace RiskTerminal
 
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             // Wrap parsing commands with a try-catch to automatically handle some edge-cases of erroneous input formats

@@ -21,11 +21,11 @@ namespace PortfolioRisk.Core.DataTypes
         /// <summary>
         /// Tail risk at terminal point at Day 260 with 1% ETL
         /// </summary>
-        public double ETL { get; set; }
+        public Dictionary<string, double>  ETL { get; set; }
         
         /// <summary>
         /// Alternative tail risk
         /// </summary>
-        public double MaxETL { get; set; }
+        public Dictionary<string, double> MaxETL { get; set; }
     }
 }

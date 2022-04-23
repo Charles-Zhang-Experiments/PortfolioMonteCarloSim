@@ -12,6 +12,7 @@
         <DockPanel LastChildFill="True">
             <ComboBox DockPanel.Dock="Top" Margin="5" 
                       ItemsSource="{Binding SeriesNames}"
+                      SelectedIndex="0"
                       SelectionChanged="Selector_OnSelectionChanged"/>
             <lvc:CartesianChart Series="{Binding Series}"/>
         </DockPanel>

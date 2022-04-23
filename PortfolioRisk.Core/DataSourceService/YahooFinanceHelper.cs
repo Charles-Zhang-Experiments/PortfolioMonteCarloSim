@@ -34,7 +34,10 @@ namespace PortfolioRisk.Core.DataSourceService
         #region Data
         private Dictionary<string, string> Remapping { get; set; } = new Dictionary<string, string>()
         {
+            // Tickers
             { "XIU", "XIU.TO" },
+            // Exchange rates
+            { "USD/CAD", "CAD=X" },
         };
         #endregion
 
@@ -80,7 +83,7 @@ namespace PortfolioRisk.Core.DataSourceService
             };
             if (parameter.InputStartDate > parameter.InputEndDate)
                 throw new ArgumentException("Wrong date.");
-            if (parameter.InputEndDate > DateTime.Now)
+            if (parameter.InputEndDate > DateTime.Now.AddDays(1))
                 throw new ArgumentException("Wrong date.");
             if (parameter.InputSymbol.Length > 7)
                 throw new ArgumentException("Wrong symbol.");

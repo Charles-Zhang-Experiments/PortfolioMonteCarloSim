@@ -11,7 +11,7 @@ namespace PortfolioRisk.Core
     public class PortfolioAnalyzer
     {
         #region Internal Data
-        private Dictionary<string, DataGrid> TimeSeries { get; set; } = new Dictionary<string, DataGrid>();
+        private Dictionary<string, DataGrid> OriginalTimeSeries { get; set; } = new Dictionary<string, DataGrid>();
         #endregion
 
         #region Interface Function
@@ -28,7 +28,7 @@ namespace PortfolioRisk.Core
             // Perform the actual simulation and analysis
             HistoricalSimulation simulator = new HistoricalSimulation(timeSeries);
             List<Dictionary<string, double[]>> results = Enumerable.Range(0, SimulationIterations)
-                .Select(_ => simulator.SimulateOnce(GetCurrentPrices(config))).ToList();
+                .AsParallel().Select(_ => simulator.SimulateOnce()).ToList();
             
             // Validation Asserts
             if (results.Count() != SimulationIterations ||
@@ -36,7 +36,7 @@ namespace PortfolioRisk.Core
                 throw new InvalidOperationException("Unexpected simulation outcome.");
             
             // Reporting
-            var reporter = new Reporter(results);
+            var reporter = new Reporter(results, GetCurrentPrices(config));
             Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
             reporter.AnnounceReport(report);
         }
@@ -44,6 +44,8 @@ namespace PortfolioRisk.Core
 
         #region Configurations
         public const int SimulationIterations = 5000;
+        public const int AdjustedCloseColumnIndex = 5;
+        public const int ETLWorstCaseTake = (int)(SimulationIterations * 0.1);
         #endregion
 
         #region Routines
@@ -51,12 +53,14 @@ namespace PortfolioRisk.Core
         {
             foreach (string symbol in config.Assets.Union(config.Factors))
             {
-                if (TimeSeries.ContainsKey(symbol)) continue;
+                if (OriginalTimeSeries.ContainsKey(symbol)) continue;
+                DataGrid table = PreprocessAndFetchSymbol(symbol, config);
+                if (table == null)
+                    throw new ArgumentException("Failed to fetch data for series.");
 
                 // Sort from past to present
-                DataGrid table = PreprocessAndFetchSymbol(symbol, config);
                 table.Sort(table.Columns.First().Header, false);
-                TimeSeries[symbol] = table;
+                OriginalTimeSeries[symbol] = table;
             }
         }
         private Dictionary<string, double> GetCurrentPrices(AnalysisConfig config)
@@ -69,7 +73,7 @@ namespace PortfolioRisk.Core
         {
             // Intersect dates and find minimally shared range of date sequence
             IEnumerable<DateTime>[] datesSeries =
-                TimeSeries.Values.Select(v => v.Columns.First().GetDataAs<DateTime>()).ToArray();
+                OriginalTimeSeries.Values.Select(v => v.Columns.First().GetDataAs<DateTime>()).ToArray();
             DateTime[] intersection = datesSeries.Skip(1)
                 .Aggregate(new HashSet<DateTime>(datesSeries.First()), (h, e) =>
                 {
@@ -81,13 +85,13 @@ namespace PortfolioRisk.Core
             // Fill in missing data for all weekdays
             Dictionary<string, List<TimeSeries>> cleanData =
                 new Dictionary<string, List<TimeSeries>>();
-            foreach (KeyValuePair<string, DataGrid> pair in TimeSeries)
+            foreach (KeyValuePair<string, DataGrid> pair in OriginalTimeSeries)
             {
                 // Extract time series
                 string ticker = pair.Key;
                 DataGrid table = pair.Value;
                 var dateColumn = table.Columns.First().GetDataAs<DateTime>();
-                var adjustedCloseColumn = table.Columns[4].GetDataAs<double>();
+                var adjustedCloseColumn = table.Columns[AdjustedCloseColumnIndex].GetDataAs<double>();
                 List<TimeSeries> timeSeries = dateColumn.Zip(adjustedCloseColumn).Select(tuple => new TimeSeries(tuple.First, tuple.Second)).ToList();
 
                 foreach (DateTime weekday in weekDays)
@@ -98,7 +102,10 @@ namespace PortfolioRisk.Core
                     Console.WriteLine($"{ticker} missing entry for date: {weekday:yyyy-MM-dd}"); // Report missing entries
 
                     if (FindSuitableFillinDate(timeSeries, weekday, out TimeSeries? substitute, out int index))
+                    {
+                        Console.WriteLine($"Back-fill with: {substitute!.Value.Date:yyyy-MM-dd}");
                         timeSeries.Insert(index, new TimeSeries(weekday, substitute!.Value.Value));
+                    }
                     else throw new InvalidOperationException($"Cannot back-fill time series for {ticker}!");
                 }
                 
@@ -141,9 +148,10 @@ namespace PortfolioRisk.Core
             };
             DataGrid table = new YahooFinanceHelper().GetSymbol(query);
 
-            // Get the latest (Yahoo returns the latest at first row)
-            DataColumn column = table.Columns[4];
-            return column[0];
+            // Get the latest
+            table.Sort(table.Columns.First().Header, false);
+            DataColumn column = table.Columns[AdjustedCloseColumnIndex];
+            return column[^1];
         }
 
         private AssetCurrency GetCurrency(string symbol)
@@ -156,7 +164,7 @@ namespace PortfolioRisk.Core
         /// </summary>
         private static DateTime[] GetWorkDays(DateTime start, DateTime end)
         {
-            return Enumerable.Range(0, (end - start).Days)
+            return Enumerable.Range(0, (end - start).Days + 1)
                 .Select(i => start.AddDays(i))
                 .Where(dt => dt.DayOfWeek != DayOfWeek.Saturday && dt.DayOfWeek != DayOfWeek.Sunday)
                 .ToArray();
@@ -176,7 +184,7 @@ namespace PortfolioRisk.Core
             if (pastData.Count() != 0)
             {
                 valueTuple = pastData.Last();
-                index = timeSeries.FindIndex(ts => ts.Date == pastData.Last().Date);
+                index = timeSeries.FindIndex(ts => ts.Date == pastData.Last().Date) + 1;
                 return true;
             }
             
