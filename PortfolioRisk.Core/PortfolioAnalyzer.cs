@@ -36,7 +36,9 @@ namespace PortfolioRisk.Core
                 throw new InvalidOperationException("Unexpected simulation outcome.");
             
             // Reporting
-            Report report = new Reporter(results).MakeReport();
+            var reporter = new Reporter(results);
+            Report report = reporter.BuildReport(AnnotateAssetCurrency(config));
+            reporter.AnnouceReport(report);
         }
         #endregion
 
@@ -106,6 +108,11 @@ namespace PortfolioRisk.Core
 
             return cleanData;
         }
+        
+        private Dictionary<string, AssetCurrency> AnnotateAssetCurrency(AnalysisConfig config)
+        {
+            return config.Assets.Union(config.Factors).ToDictionary(s => s, GetCurrency);
+        }
         #endregion
 
         #region Helpers
@@ -114,50 +121,40 @@ namespace PortfolioRisk.Core
         /// </summary>
         private DataGrid PreprocessAndFetchSymbol(string originalSymbol, AnalysisConfig config)
         {
-            // Offline sources
-            if (OfflineSourceHelper.OfflineSources.Contains(originalSymbol))
+            SymbolDefinition symbol = new SymbolDefinition()
             {
-                return OfflineSourceHelper.GetSymbol(originalSymbol);
-            }
-            // Interest rates
-            else if (originalSymbol.Contains('/'))
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                YahooFinanceParameter parameter = new YahooFinanceParameter()
-                {
-                    InputSymbol = originalSymbol,
-                    InputInterval = YahooTimeInterval.Day,
-                    InputStartDate = config.StartDate!.Value,
-                    InputEndDate = config.EndDate!.Value,
-                };
-                YahooFinanceHelper.GetHistorical(parameter);
-                return parameter.OutputTable;
-            }
+                Name = originalSymbol,
+                QueryStartDate = config.StartDate!.Value,
+                QueryEndDate = config.EndDate!.Value
+            };
+            IDataSourceProvider provider = GetHandling(originalSymbol);
+            return provider.GetSymbol(symbol);
         }
         
         private double GetCurrentPrice(string symbol)
         {
-            YahooFinanceParameter parameter = new YahooFinanceParameter()
+            SymbolDefinition query = new SymbolDefinition()
             {
-                InputSymbol = symbol,
-                InputInterval = YahooTimeInterval.Day,
-                InputStartDate = DateTime.Now.Date.AddDays(-2),
-                InputEndDate = DateTime.Now.Date.AddDays(1),
+                Name = symbol,
+                QueryStartDate = DateTime.Now.Date.AddDays(-2),
+                QueryEndDate = DateTime.Now.Date.AddDays(1)
             };
-            YahooFinanceHelper.GetHistorical(parameter);
+            DataGrid table = new YahooFinanceHelper().GetSymbol(query);
 
             // Get the latest (Yahoo returns the latest at first row)
-            DataColumn column = parameter.OutputTable.Columns[4];
+            DataColumn column = table.Columns[4];
             return column[0];
+        }
+
+        private AssetCurrency GetCurrency(string symbol)
+        {
+            return GetHandling(symbol).GetSymbolCurrency(symbol);
         }
 
         /// <summary>
         /// Get a sequence of all workdays between two end points
         /// </summary>
-        public static DateTime[] GetWorkDays(DateTime start, DateTime end)
+        private static DateTime[] GetWorkDays(DateTime start, DateTime end)
         {
             return Enumerable.Range(0, (end - start).Days)
                 .Select(i => start.AddDays(i))
@@ -194,6 +191,21 @@ namespace PortfolioRisk.Core
             valueTuple = null;
             index = -1;
             return false;
+        }
+
+        private IDataSourceProvider GetHandling(string symbol)
+        {
+            // Offline sources
+            if (OfflineSourceHelper.OfflineSources.Contains(symbol))
+            {
+                return new OfflineSourceHelper();
+            }
+            // Interest rates
+            else if (symbol.Contains('/'))
+            {
+                throw new NotImplementedException();
+            }
+            else return new YahooFinanceHelper();
         }
         #endregion
     }

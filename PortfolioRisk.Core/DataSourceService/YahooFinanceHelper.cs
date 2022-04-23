@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
+using PortfolioRisk.Core.DataTypes;
 
 namespace PortfolioRisk.Core.DataSourceService
 {
@@ -28,14 +29,37 @@ namespace PortfolioRisk.Core.DataSourceService
     /// <summary>
     /// Fetches time series data from yahoo finance using non-developer web-api
     /// </summary>
-    public static class YahooFinanceHelper
+    public class YahooFinanceHelper: IDataSourceProvider
     {
-        public static Dictionary<string, string> Remapping { get; set; } = new Dictionary<string, string>()
+        #region Data
+        private Dictionary<string, string> Remapping { get; set; } = new Dictionary<string, string>()
         {
             { "XIU", "XIU.TO" },
         };
+        #endregion
 
-        public static void GetHistorical(YahooFinanceParameter parameter)
+        #region Public Interface
+
+        public DataGrid GetSymbol(SymbolDefinition symbol)
+        {
+            var parameters = new YahooFinanceParameter()
+            {
+                InputInterval = YahooTimeInterval.Day,
+                InputSymbol = symbol.Name,
+                InputStartDate = symbol.QueryStartDate,
+                InputEndDate = symbol.QueryEndDate
+            };
+            GetHistorical(parameters);
+            return parameters.OutputTable;
+        }
+        public AssetCurrency GetSymbolCurrency(string symbol)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+
+        #region Helpers
+        public void GetHistorical(YahooFinanceParameter parameter)
         {
             string ConvertTimeFormat(DateTime input)
             {
@@ -67,11 +91,12 @@ namespace PortfolioRisk.Core.DataSourceService
             string csvUrl =
                 $"https://query1.finance.yahoo.com/v7/finance/download/{RemapSymbols(parameter.InputSymbol)}?period1={startTime}&period2={endTime}&interval={interval}&events=history&includeAdjustedClose=true";
             string csvText = new WebClient().DownloadString(csvUrl);
-            IEnumerable<ICsvLine> csv = Csv.CsvReader.ReadFromText(csvText, new CsvOptions()
+            IEnumerable<ICsvLine> csv = CsvReader.ReadFromText(csvText, new CsvOptions()
             {
                 HeaderMode = HeaderMode.HeaderPresent
             });
             parameter.OutputTable = new DataGrid(csv);
         }
+        #endregion
     }
 }

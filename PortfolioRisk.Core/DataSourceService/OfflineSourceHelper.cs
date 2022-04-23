@@ -5,28 +5,35 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using PortfolioRisk.Core.DataTypes;
 
 namespace PortfolioRisk.Core.DataSourceService
 {
-    public static class OfflineSourceHelper
+    public class OfflineSourceHelper: IDataSourceProvider
     {
-        public static string[] OfflineSources = new string[] { "SPY", "XIU", "USD/CAD" };
-        public static Dictionary<string, string> Remapping { get; set; } = new Dictionary<string, string>()
+        #region Data
+        public static readonly string[] OfflineSources = new string[] { "SPY", "XIU", "USD/CAD" };
+        private Dictionary<string, string> FilenameRemapping { get; } = new Dictionary<string, string>()
         {
             { "USD/CAD", "USD=CAD" },
         };
-
-        public static DataGrid GetSymbol(string symbol)
+        private Dictionary<string, AssetCurrency> CurrencyMapping { get; } = new Dictionary<string, AssetCurrency>()
         {
-            string RemapSymbols(string original)
-                => Remapping.ContainsKey(original) ? Remapping[original] : original;
+            {"SPY", AssetCurrency.USD},
+            {"XIU", AssetCurrency.CAD},
+            {"USD/CAD", AssetCurrency.CONVERTER_TO_CAD},
+        };
+        #endregion
 
-            symbol = RemapSymbols(symbol);
-            if (OfflineSources.Contains(symbol))
+        #region Interface Methods
+        public DataGrid GetSymbol(SymbolDefinition symbol)
+        {
+            string name = RemapSymbols(symbol.Name);
+            
+            if (OfflineSources.Contains(name))
             {
                 string csvText = ReadTextResource($"PortfolioRisk.Core.OfflineSources.{symbol}.csv");
-                IEnumerable<ICsvLine> csv = Csv.CsvReader.ReadFromText(csvText, new CsvOptions()
+                IEnumerable<ICsvLine> csv = CsvReader.ReadFromText(csvText, new CsvOptions()
                 {
                     HeaderMode = HeaderMode.HeaderPresent
                 });
@@ -35,8 +42,16 @@ namespace PortfolioRisk.Core.DataSourceService
 
             return null;
         }
+        public AssetCurrency GetSymbolCurrency(string symbol)
+        {
+            if (CurrencyMapping.ContainsKey(symbol))
+                return CurrencyMapping[symbol];
+            throw new ArgumentException("Undefined symbol.");
+        }
+        #endregion
 
-        public static string ReadTextResource(string name)
+        #region Helpers
+        private string ReadTextResource(string name)
         {
             // Determine path
             var assembly = Assembly.GetCallingAssembly();
@@ -54,5 +69,8 @@ namespace PortfolioRisk.Core.DataSourceService
                 return reader.ReadToEnd();
             }
         }
+        private string RemapSymbols(string original)
+            => FilenameRemapping.ContainsKey(original) ? FilenameRemapping[original] : original;
+        #endregion
     }
 }

@@ -1,20 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using PortfolioRisk.Core.DataTypes;
 
 namespace PortfolioRisk.Core
 {
     public class Reporter
     {
+        #region Constructor
         public Reporter(List<Dictionary<string,double[]>> results)
         {
             SimulationResults = results;
         }
+        #endregion
 
-        public List<Dictionary<string,double[]>> SimulationResults { get; set; }
+        #region Private Members
+        private List<Dictionary<string,double[]>> SimulationResults { get; }
+        #endregion
 
-        public Report MakeReport()
+        #region Public Interface Method
+        public Report BuildReport(Dictionary<string, AssetCurrency> annotateAssetCurrency)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
+
+        public void AnnouceReport(Report report)
+        {
+            // Basic stats
+            Console.WriteLine(report.PortfolioReturn);
+            Console.WriteLine(report.ETL);
+            Console.WriteLine(report.MaxETL);
+            
+            // Analysis and trends
+        }
+        #endregion
     }
 }
