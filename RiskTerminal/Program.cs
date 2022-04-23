@@ -12,12 +12,28 @@ namespace RiskTerminal
         TotalAllocation,
         Factors,
         Assets,
-        Weights
+        Weights,
+        StartDate,
+        EndDate
     }
 
     class Program
     {
         static void Main(string[] args)
+        {
+            // Wrap parsing commands with a try-catch to automatically handle some edge-cases of erroneous input formats
+            try
+            {
+                ParseCommandsAndRun(args);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+        }
+
+        static void ParseCommandsAndRun(string[] args)
         {
             // Run sample for Question 1
             if (args.Length == 0 || args.First().ToLower() == "sample")
@@ -48,9 +64,16 @@ namespace RiskTerminal
                             parseMode = ArgumentParseMode.Factors;
                             parameters.Factors = new List<string>();
                             break;
+                        case "-s":
+                            parseMode = ArgumentParseMode.StartDate;
+                            break;
+                        case "-e":
+                            parseMode = ArgumentParseMode.EndDate;
+                            break;
                         default:
                             switch (parseMode)
                             {
+                                default:
                                 case ArgumentParseMode._Undetermined:
                                     goto EndOfParsing;
                                 case ArgumentParseMode.TotalAllocation:
@@ -66,32 +89,46 @@ namespace RiskTerminal
                                 case ArgumentParseMode.Weights:
                                     parameters.Weights.Add(double.Parse(arg));
                                     break;
-                                default:
+                                case ArgumentParseMode.StartDate:
+                                    parameters.StartDate = DateTime.Parse(arg);
+                                    break;
+                                case ArgumentParseMode.EndDate:
+                                    parameters.EndDate = DateTime.Parse(arg);
                                     break;
                             }
                             break;
                     }
                 }
 
-                EndOfParsing:
-                if (new object[] { parameters.Assets, parameters.TotalAllocation, parameters.Weights }.Any(v => v == null))
-                    Console.WriteLine("Invalid command line format.");
-                else
-                    Run(parameters);
+                EndOfParsing: Run(parameters);
             }
         }
 
+        #region Routines
+
         static void RunSample()
-            => Run(new AnalysisConfig()
+        {
+            Console.WriteLine("Run sample data sets.");
+            Run(new AnalysisConfig()
             {
                 Weights = new List<double> { 1, 1 },
                 TotalAllocation = 2000000000,
                 Assets = new List<string> { "SPY", "XIU" },
-                Factors = new List<string> { "SPY", "XIU", "USD/CAD" }
+                Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
+                StartDate = new DateTime(2017, 1, 1),
+                EndDate = new DateTime(2021, 12, 31)
             });
+        }
 
         static void Run(AnalysisConfig config)
         {
+            // Check for missing inputs parameters
+            if (config.ContainsMissingValue())
+            {
+                Console.WriteLine("Invalid command line format.");
+                return;
+            }
+
             try
             {
                 new PortfolioAnalyzer().Run(config);
@@ -102,5 +139,6 @@ namespace RiskTerminal
                 Console.WriteLine(e.Message);
             }
         }
+        #endregion
     }
 }

@@ -2,7 +2,20 @@
 
 This solution requires [.Net Core SDK 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1).
 
+## Overview
+
+There are two complications in the overall solution (e.g. for Question 1):
+
+1. Data downloading and preprocessing: For manual operations one can download CSV files from the web and manually clean up the data for missing entries and mis-matching dates, but for generic general-purpose API-based data source, the program must be smart enough to automatically handle errors in data. This part of code is mostly done inside `PortfolioAnalyzer` class.
+2. Data simulation and processing: When proper data is fetched and ready for processing, the actual simulation is quite trivial; This is done with the help of classes inside `Algorithm` namespace.
+
 # Software Components
+
+The whole solution is written entirely in C# (with some JavaScript and HTML), and is divided into three parts: 
+
+1. (.Net Core Class Library) PortfolioRisk.Core
+2. (.Net Core Console Program) Risk Terminal
+3. (.Net Core Blazor Web Assembly Application) Portfolio Builder Web App
 
 ## PortfolioRisk.Core
 
@@ -12,12 +25,12 @@ This library project provides all shared code logic for the other two programs.
 
 A CLI (Command-Line Interface) program that provides general purpose risk analysis using a command line interface.
 
-Command format: `RiskTerminal -a <Total Allocation> -t <Ticker Names> -w <Ticker Weights>` 
-Example: `RiskTerminal -a 2,000,000 -t <Ticker Names> -w <Ticker Weights>`
+Command format: `RiskTerminal -t <Total Allocation> -a <Assets> -w <Asset Weights> -f <Factors> -s <Start Date> -e <End Date>` 
+Example: `RiskTerminal -t 2,000,000 -a SPY XIU -w 1 1 -f SPY XIU USD/CAD`
 
-Use command `RiskTerminal sample` to run the sample data as in Question 1 of *interview questions.pdf*.
+Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample data as in Question 1 of *interview questions.pdf*.
 
-## RiskBuilderWebApp
+## Portfolio Builder Web App
 
 An interactive single-page Blazor web app that allows construct and analysis of portfolio risk through web interface.
 
