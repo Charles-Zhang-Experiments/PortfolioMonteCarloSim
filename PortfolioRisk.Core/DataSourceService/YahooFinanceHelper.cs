@@ -38,6 +38,8 @@ namespace PortfolioRisk.Core.DataSourceService
         {
             string ConvertTimeFormat(DateTime input)
             {
+                input = input.Date; // Clear out time, set to 0
+                
                 // Tiemzone info: https://stackoverflow.com/questions/5996320/net-timezoneinfo-from-olson-time-zone
                 // { "America/New_York", "Eastern Standard Time" },
                 TimeZoneInfo americaNewYorkTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");

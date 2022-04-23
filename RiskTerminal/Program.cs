@@ -115,7 +115,7 @@ namespace RiskTerminal
                 TotalAllocation = 2000000000,
                 Assets = new List<string> { "SPY", "XIU" },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
-                StartDate = new DateTime(2017, 1, 1),
+                StartDate = new DateTime(2016, 12, 31),
                 EndDate = new DateTime(2021, 12, 31)
             });
         }

@@ -3,6 +3,8 @@ using PortfolioRisk.Core.DataSourceService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PortfolioRisk.Core.Algorithm;
+using PortfolioRisk.Core.DataTypes;
 
 namespace PortfolioRisk.Core
 {
@@ -12,9 +14,25 @@ namespace PortfolioRisk.Core
         private Dictionary<string, DataGrid> TimeSeries { get; set; } = new Dictionary<string, DataGrid>();
         #endregion
 
+        #region Interface Function
         public void Run(AnalysisConfig config)
         {
             // Fetch time series data
+            PopulateTimeSeries(config);
+
+            // Yahoo Finance returns data with incomplete entries and sometimes wrong range of date;
+            // So we need to pre-process and clean data
+            // (unify dates, and fill in missing data for all weekdays, then we get matching number of rows)
+            Dictionary<string, List<TimeSeries>> result = CleanupData();
+            
+            // Perform the actual simulation and analysis
+            new HistoricalSimulation(result).Simulate(config);
+        }
+        #endregion
+
+        #region Routines
+        private void PopulateTimeSeries(AnalysisConfig config)
+        {
             foreach (string symbol in config.Assets.Union(config.Factors))
             {
                 if (TimeSeries.ContainsKey(symbol)) continue;
@@ -24,13 +42,12 @@ namespace PortfolioRisk.Core
                 table.Sort(table.Columns.First().Header, false);
                 TimeSeries[symbol] = table;
             }
-
-            // Yahoo Finance returns data with incomplete entries and sometimes wrong range of date;
-            // So we need to pre-process and clean data
-            // (unify dates, and fill in missing data for all weekdays, then we get matching number of rows)
-            
+        }
+        private Dictionary<string, List<TimeSeries>> CleanupData()
+        {
             // Intersect dates and find minimally shared range of date sequence
-            IEnumerable<DateTime>[] datesSeries = TimeSeries.Values.Select(v => v.Columns.First().GetDataAs<DateTime>()).ToArray();
+            IEnumerable<DateTime>[] datesSeries =
+                TimeSeries.Values.Select(v => v.Columns.First().GetDataAs<DateTime>()).ToArray();
             DateTime[] intersection = datesSeries.Skip(1)
                 .Aggregate(new HashSet<DateTime>(datesSeries.First()), (h, e) =>
                 {
@@ -38,7 +55,10 @@ namespace PortfolioRisk.Core
                     return h;
                 }).OrderBy(dt => dt).ToArray();
             DateTime[] weekDays = GetWorkDays(intersection.Min(), intersection.Max());
+            
             // Fill in missing data for all weekdays
+            Dictionary<string, List<TimeSeries>> cleanData =
+                new Dictionary<string, List<TimeSeries>>();
             foreach (KeyValuePair<string, DataGrid> pair in TimeSeries)
             {
                 // Extract time series
@@ -46,24 +66,29 @@ namespace PortfolioRisk.Core
                 DataGrid table = pair.Value;
                 var dateColumn = table.Columns.First().GetDataAs<DateTime>();
                 var adjustedCloseColumn = table.Columns[4].GetDataAs<double>();
-                List<(DateTime First, double Second)> timeSeries = dateColumn.Zip(adjustedCloseColumn).ToList();
+                List<TimeSeries> timeSeries = dateColumn.Zip(adjustedCloseColumn).Select(tuple => new TimeSeries(tuple.First, tuple.Second)).ToList();
 
-                for (int i = 0; i < weekDays.Length; i++)
+                foreach (DateTime weekday in weekDays)
                 {
-                    DateTime weekday = weekDays[i];
-                    if (timeSeries.Any(ts => ts.First == weekday))
+                    if (timeSeries.Any(ts => ts.Date == weekday))
                         continue;
                     
-                    if (FindSuitableFillinDate(timeSeries, weekday, weekDays,
-                        out (DateTime First, double Second) substitute, out int index))
-                        timeSeries.Insert(index, (First: weekday, Second: substitute.Second));
+                    Console.WriteLine($"{ticker} missing entry for date: {weekday:yyyy-MM-dd}"); // Report missing entries
+
+                    if (FindSuitableFillinDate(timeSeries, weekday, out TimeSeries? substitute, out int index))
+                        timeSeries.Insert(index, new TimeSeries(weekday, substitute!.Value.Value));
                     else throw new InvalidOperationException($"Cannot back-fill time series for {ticker}!");
                 }
-                Console.WriteLine(); // Report missing entries
+                
+                // Save result
+                cleanData.Add(ticker, timeSeries);
             }
-        }
 
-        #region Routines
+            return cleanData;
+        }
+        #endregion
+
+        #region Helpers
         /// <summary>
         /// Automatically handle conversion of common names and interest rate
         /// </summary>
@@ -81,13 +106,12 @@ namespace PortfolioRisk.Core
             }
             else
             {
-                string symbol = originalSymbol;
                 YahooFinanceParameter parameter = new YahooFinanceParameter()
                 {
-                    InputSymbol = symbol,
+                    InputSymbol = originalSymbol,
                     InputInterval = YahooTimeInterval.Day,
-                    InputStartDate = new DateTime(2016, 12, 31),
-                    InputEndDate = new DateTime(2021, 12, 31),
+                    InputStartDate = config.StartDate!.Value,
+                    InputEndDate = config.EndDate!.Value,
                 };
                 YahooFinanceHelper.GetHistorical(parameter);
                 return parameter.OutputTable;
@@ -97,7 +121,7 @@ namespace PortfolioRisk.Core
         /// <summary>
         /// Get a sequence of all workdays between two end points
         /// </summary>
-        private DateTime[] GetWorkDays(DateTime start, DateTime end)
+        public static DateTime[] GetWorkDays(DateTime start, DateTime end)
         {
             return Enumerable.Range(0, (end - start).Days)
                 .Select(i => start.AddDays(i))
@@ -109,9 +133,31 @@ namespace PortfolioRisk.Core
         /// Given a target date (that's absent in a given time series) and a reference,
         /// find the most suitable entry to back-fill data for that date
         /// </summary>
-        private bool FindSuitableFillinDate(List<(DateTime First, double Second)> timeSeries, DateTime weekday, DateTime[] weekDays, out (DateTime First, double Second) valueTuple, out int i)
+        private bool FindSuitableFillinDate(List<TimeSeries> timeSeries, DateTime weekday, out TimeSeries? valueTuple, out int index)
         {
-            throw new NotImplementedException();
+            // Strategy: First try to fill from a previously available date
+            // If that is not available, try to fill from the next available date
+            // If both fails, return false
+
+            TimeSeries[] pastData = timeSeries.Where(ts => ts.Date <= weekday).ToArray();
+            if (pastData.Count() != 0)
+            {
+                valueTuple = pastData.Last();
+                index = timeSeries.FindIndex(ts => ts.Date == pastData.Last().Date);
+                return true;
+            }
+            
+            TimeSeries[] futureData = timeSeries.Where(ts => ts.Date >= weekday).ToArray();
+            if (futureData.Count() != 0)
+            {
+                valueTuple = futureData.First();
+                index = timeSeries.FindIndex(ts => ts.Date == futureData.First().Date);
+                return true;
+            }
+            
+            valueTuple = null;
+            index = -1;
+            return false;
         }
         #endregion
     }
