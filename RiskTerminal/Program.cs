@@ -114,7 +114,7 @@ namespace RiskTerminal
             Run(new AnalysisConfig()
             {
                 Weights = new List<double> { 1, 1 },
-                TotalAllocation = 2000000000,
+                TotalAllocation = 2000000000,   // In CAD
                 Assets = new List<string> { "SPY", "XIU" },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
                 StartDate = new DateTime(2016, 12, 31),
@@ -125,7 +125,7 @@ namespace RiskTerminal
         static void Run(AnalysisConfig config)
         {
             // Check for missing inputs parameters
-            if (config.ContainsMissingValue())
+             if (config.ContainsMissingValue())
             {
                 Console.WriteLine("Invalid command line format.");
                 return;

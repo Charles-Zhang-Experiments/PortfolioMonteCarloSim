@@ -14,19 +14,17 @@ namespace ChartViewer
     public partial class App : Application
     {
         #region Constructor
-
         public App()
         {
         }
-
-        public App(Dictionary<string, double[][]> series)
+        public App(ViewModel model)
         {
-            Series = series;
+            Model = model;
         }
         #endregion
 
         #region Data
-        public Dictionary<string, double[][]> Series { get; set; }
+        public ViewModel Model { get; }
         #endregion
     }
 }

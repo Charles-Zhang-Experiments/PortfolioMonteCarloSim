@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PortfolioRisk.Core.DataTypes
 {
@@ -13,6 +14,14 @@ namespace PortfolioRisk.Core.DataTypes
     
     public class Report
     {
+        #region Constructor
+        public Report(Dictionary<string,double> currentPrices)
+        {
+            CurrentPrices = currentPrices;
+        }
+        #endregion
+
+        #region Properties
         /// <summary>
         /// Number in CAD
         /// </summary>
@@ -27,5 +36,8 @@ namespace PortfolioRisk.Core.DataTypes
         /// Alternative tail risk
         /// </summary>
         public Dictionary<string, double> MaxETL { get; set; }
+        
+        public Dictionary<string,double> CurrentPrices { get; set; }
+        #endregion
     }
 }

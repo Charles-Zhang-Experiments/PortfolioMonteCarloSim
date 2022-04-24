@@ -6,14 +6,20 @@
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         xmlns:local="clr-namespace:ChartViewer"
         mc:Ignorable="d"
-        Title="{Binding Test}" Height="450" Width="800"
+        Title="{Binding DynamicTitle}" Height="450" Width="800"
         DataContext="{Binding RelativeSource={RelativeSource self}}">
     <Grid>
         <DockPanel LastChildFill="True">
-            <ComboBox DockPanel.Dock="Top" Margin="5" 
-                      ItemsSource="{Binding SeriesNames}"
-                      SelectedIndex="0"
-                      SelectionChanged="Selector_OnSelectionChanged"/>
+            <DockPanel DockPanel.Dock="Top"  LastChildFill="True">
+                <Label Content="Asset"></Label>
+                <ComboBox Margin="5" 
+                          ItemsSource="{Binding SeriesNames}"
+                          SelectedIndex="0"
+                          SelectionChanged="Selector_OnSelectionChanged"/>
+            </DockPanel>
+            
+            <Label DockPanel.Dock="Top" Content="Scenarios (Samples Preview): "></Label>
+            <TextBlock DockPanel.Dock="Bottom" Text="{Binding SummaryText}"></TextBlock>
             <lvc:CartesianChart Series="{Binding Series}"/>
         </DockPanel>
     </Grid>

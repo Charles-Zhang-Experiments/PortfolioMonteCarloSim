@@ -93,15 +93,13 @@ namespace PortfolioRisk.Core.Algorithm
         {
             Dictionary<string, TimeSeries[]> result = new Dictionary<string, TimeSeries[]>();
 
-            foreach (KeyValuePair<string,List<TimeSeries>> timeSeries in rawData)
+            foreach ((string ticker, List<TimeSeries> oldSeries) in rawData)
             {
-                string ticker = timeSeries.Key;
-                List<TimeSeries> valueSeries = timeSeries.Value;
                 List<TimeSeries> newSeries = new List<TimeSeries>();
-                for (int i = valueSeries.Count - 1; i > 0; i--)
+                for (int i = oldSeries.Count - 1; i > 0; i--)
                 {
-                    DateTime date = valueSeries[i].Date;
-                    double value = valueSeries[i].Value / valueSeries[i - 1].Value;
+                    DateTime date = oldSeries[i].Date;
+                    double value = oldSeries[i].Value / oldSeries[i - 1].Value;
                     newSeries.Add(new TimeSeries(date, value));
                 }
                 
