@@ -10,8 +10,24 @@ namespace PortfolioRisk.Core
 {
     public class PortfolioAnalyzer
     {
+        #region State
+        public Dictionary<string, List<TimeSeries>> TimeSeries { get; private set; }
+        public List<Dictionary<string, double[]>> TotalReturns { get; private set; }
+        #endregion
+
         #region Interface Function
-        public Report Run(AnalysisConfig config)
+        public void Run(AnalysisConfig config)
+        {
+            // Data preparation
+            Stage1(config);
+
+            // Simulate
+            Stage2();
+
+            // Report
+            Stage3(config);
+        }
+        public void Stage1(AnalysisConfig config)
         {
             // Normalize weights
             config.NormalizeWeights();
@@ -22,20 +38,24 @@ namespace PortfolioRisk.Core
             // Yahoo Finance returns data with incomplete entries and sometimes wrong range of date;
             // So we need to pre-process and clean data
             // (unify dates, and fill in missing data for all weekdays, then we get matching number of rows)
-            Dictionary<string, List<TimeSeries>> timeSeries = CleanupData(originalTimeSeries);
-
+            TimeSeries = CleanupData(originalTimeSeries);
+        }
+        public void Stage2()
+        {
             // Perform the actual simulation and analysis
-            HistoricalSimulation simulator = new HistoricalSimulation(timeSeries);
-            List<Dictionary<string, double[]>> totalReturns = Enumerable.Range(0, SimulationIterations)
+            HistoricalSimulation simulator = new HistoricalSimulation(TimeSeries);
+            TotalReturns = Enumerable.Range(0, SimulationIterations)
                 .AsParallel().Select(_ => simulator.SimulateOnce()).ToList();
-            
+
             // Validation Assert
-            if (totalReturns.Count() != SimulationIterations ||
-                totalReturns.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
+            if (TotalReturns.Count() != SimulationIterations ||
+                TotalReturns.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
                 throw new InvalidOperationException("Unexpected simulation outcome.");
-            
+        }
+        public Report Stage3(AnalysisConfig config)
+        {
             // Reporting
-            Reporter reporter = new Reporter(totalReturns, GetCurrentPrices(config, out DateTime date), date);
+            Reporter reporter = new Reporter(TotalReturns, GetCurrentPrices(config, out DateTime date), date);
             Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
             reporter.AnnounceReport(config, report);
 

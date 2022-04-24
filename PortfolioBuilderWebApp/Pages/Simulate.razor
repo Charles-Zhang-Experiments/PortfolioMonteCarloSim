@@ -1,17 +1,40 @@
 ﻿@page "/simulate"
+@using PortfolioRisk.Core
 
-<h1>Counter</h1>
+<h1>Simulate</h1>
 
-<p>Current count: @currentCount</p>
+@if (PortfolioBuilder.PortfolioAnalyzer == null
+    || PortfolioBuilder.PortfolioAnalyzer.TotalReturns == null)
+{
+    <button type="button" class="btn btn-primary" @onclick="RunStage2">Simulate</button>
+}
+else
+{
+    <p>Simulation is finished.</p>
+}
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<p>@_errorMessage</p>
 
 @code {
-    private int currentCount = 0;
+    #region View Properties
+    private string _errorMessage;
+    #endregion
 
-    private void IncrementCount()
+    #region Methods
+    private void RunStage2()
     {
-        currentCount++;
+        AnalysisConfig config = PortfolioBuilder.Config;
+        if (PortfolioBuilder.PortfolioAnalyzer == null) return;
+        
+        try
+        {
+            PortfolioBuilder.PortfolioAnalyzer.Stage2();
+        }
+        catch (Exception e)
+        {
+            _errorMessage = "An error occured during simulation.\n";
+            _errorMessage += e.Message;
+        }
     }
-
+    #endregion
 }

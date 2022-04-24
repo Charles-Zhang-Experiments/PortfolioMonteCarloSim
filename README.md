@@ -68,6 +68,10 @@ An interactive single-page Blazor web app that allows construct and analysis of 
 
 This can be further improved with more sophisticated background worker management when risk data gets large.
 
+For the sake of simplicity and demonstration purpose, the web interface is built with front-end only technology without depending on a server; This puts some restrictions on computing power and in this case also to the accessibility of Yahoo Finance API due to cross-origin access issues.
+
+Ideally for more practical purpose, one would seperate the front-end from the back-end so there is more flexibility in implementation.
+
 ## Offline Data Sources (Folder)
 
 The implementation provides automatic ticker historical data fetching capabilities from Yahoo Finance, notice due to the closed-source nature of Yahoo Finance API (official Yahoo Finance API was disabled in 2017), there may be issues with fetching data when unexpected formats are encountered - that's why an offline data source is provided, as described below.

@@ -3,21 +3,19 @@
 
 <h1>Fetch Data</h1>
 
-<button type="button" class="btn btn-primary" @onclick="FetchAndRun">Fetch</button>
-
-@if (PortfolioBuilder.PortfolioAnalyzer == null)
+@if (PortfolioBuilder.PortfolioAnalyzer == null
+    || PortfolioBuilder.PortfolioAnalyzer.TimeSeries == null)
 {
-    
+    <button type="button" class="btn btn-primary" @onclick="FetchAndRun">Fetch</button>
 }
 else
 {
-    
+    // Display time series
 }
 
 <p>@_errorMessage</p>
 
 @code {
-
     #region View Properties
     private string _errorMessage;
     #endregion
@@ -41,7 +39,7 @@ else
         try
         {
             PortfolioBuilder.PortfolioAnalyzer = new PortfolioAnalyzer();
-            PortfolioBuilder.Report = PortfolioBuilder.PortfolioAnalyzer.Run(PortfolioBuilder.Config);
+            PortfolioBuilder.PortfolioAnalyzer.Stage1(PortfolioBuilder.Config);
         }
         catch (Exception e)
         {
