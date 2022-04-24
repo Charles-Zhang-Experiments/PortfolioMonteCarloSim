@@ -38,7 +38,7 @@ For standalone use:
 
 For quick online test:
 
-* Go to https://totalimagine.com/risk, it provides the examples in Question 1 as preset
+* Go to https://risk.totalimagine.com, it provides the examples in Question 1 as preset
 
 # Software Components
 
@@ -84,13 +84,38 @@ Since both the offline data and Yahoo Finance API data can have missing dates, o
 
 ## Methodology
 
-1. Data needs clean up, some are filled for missing data.
+1. Data needs clean up, some are back-filled for missing dates, the program also supports forward-fill by grabing from neighbouring future dates in case no historical data is available, though in practice this is not observed for our sample data;
+2. For "PnL" calculation, the program currently shows the final projected market value of the asset instead of its actual "loss";
+3. Due to time constraint, the current visualization for CLI program is not showing currency visualization, this would be helpful in understanding the trend; It can be added in future implementation. However, this is available in the website interface.
 
 ## Analysis
 
-Factors: 
+For a *$CAD2B* portfolio with **SPY** and **XIU** weighted *1:1* invested on **2022-04-24**, sampling historical data from **2017-01-01** to **2021-12-31**,below is the summary of the simulated result. The values shown are the final simulated market value in CAD:
 
+```
+ETL:
+   SPY:  1,211,746,006
+   XIU:    849,664,103
+Max ETL:
+   SPY:    966,778,569
+   XIU:    670,735,737
+Current Price (2022-04-24): SPY: 426.04, XIU: 32.48, USD/CAD: 1.27
+```
+
+There are two ways to make sense out of this: graphically and analytically based on constituting components.
+
+Graphically speaking (though this screenshot contains only the first 10 scenarios), SPY has a stronger upper trend and XIU is more affected by negative trends.
+
+![SPY](./Example/Example-SPY.png)
+
+![XIU](./Example/Example-XIU.png)
+
+
+Another way is to consider the factors - for a total final simulated portfolio value of *2,061,410,109*, *1,211,746,006* comes from SPY and *849,664,103* comes from XIU. Out of this, since SPY is originally rated in USD, we should also be able to get its risk value in USD and get the USD/CAD exchange rate risk.
+
+<!--
 * XIU
 * SPY (USD)
 * USD/CAD
 * SPY (USD) + USD/CAD
+-->
