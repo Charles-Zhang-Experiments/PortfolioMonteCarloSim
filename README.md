@@ -21,24 +21,28 @@ There are two complications in the overall solution (e.g. for Question 1):
 
 ## How to Run
 
-This solution requires [.Net Core SDK 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1).
+This solution requires [.Net Core SDK 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1) and the server application requires [.Net SDK 5.0](https://dotnet.microsoft.com/en-us/download/dotnet/5.0).
 
 For compiling and run:
 
 1. Open *OTPPInterview2022.sln* in Visual Studio or Rider;
-2. Set *RiskTerminal* or *PortfolioBuilderWebApp* as starting project;
+2. Set *RiskTerminal* or *PortfolioBuilder* as starting project;
 3. Press *F5* to run, It should take less than a minute to execute after compilation is done; 
 4. The outcome will be shown inside the CLI console output and inside a pop-up window.
 
 For standalone use:
 
-* Download and unzip [latest build for windows]();
-* Execute either RiskTerminal.exe or PortfolioBuilderWebApp.exe;
+* Download and unzip [latest build for windows](https://github.com/chaojian-zhang/OTPPInterview2022/releases/tag/v1.0);
+* Execute either **Desktop/RiskTerminal.exe** or **Server/PortfolioBuilder.exe**;
 * For command line parameters, see section on *Risk Terminal* below.
 
 For quick online test:
 
-* Go to https://risk.totalimagine.com, it provides the examples in Question 1 as preset
+* Go to http://risk.totalimagine.com, it provides the examples in Question 1 as preset.
+
+## Future Improvements
+
+The risk analytics part of the program can easily be improved; That is, for final risk numbers, we can generate contribution from exchange rate for easier analysis.
 
 # Software Components
 
