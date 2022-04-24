@@ -100,10 +100,6 @@ namespace PortfolioRisk.Core.DataSourceService
             return timeStamp;
         }
         #endregion
-        
-        #region Hack
-        public static Func<string, string> FetchUrlTextOverride { get; set; }
-        #endregion
 
         #region Helpers
         /// <summary>
@@ -111,8 +107,6 @@ namespace PortfolioRisk.Core.DataSourceService
         /// </summary>
         private string FetchUrlText(string url)
         {
-            if (FetchUrlTextOverride != null) return FetchUrlTextOverride(url);
-            
             HttpClient client = new HttpClient();
             using HttpResponseMessage response = client.GetAsync(url).Result;
             using HttpContent content = response.Content;

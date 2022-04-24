@@ -3,8 +3,8 @@
 
 <h1>Fetch Data</h1>
 
-@if (PortfolioBuilder.PortfolioAnalyzer == null
-    || PortfolioBuilder.PortfolioAnalyzer.TimeSeries == null)
+@if (ApplicationState.PortfolioAnalyzer == null
+    || ApplicationState.PortfolioAnalyzer.TimeSeries == null)
 {
     <button type="button" class="btn btn-primary" @onclick="FetchAndRun">Fetch</button>
 }
@@ -23,8 +23,8 @@ else
     #region Methods
     private void FetchAndRun()
     {
-        AnalysisConfig config = PortfolioBuilder.Config;
-        if (PortfolioBuilder.PortfolioAnalyzer != null) return;
+        AnalysisConfig config = ApplicationState.Config;
+        if (ApplicationState.PortfolioAnalyzer != null) return;
         
         _errorMessage = string.Empty;
         // Check for missing inputs parameters
@@ -38,8 +38,8 @@ else
             
         try
         {
-            PortfolioBuilder.PortfolioAnalyzer = new PortfolioAnalyzer();
-            PortfolioBuilder.PortfolioAnalyzer.Stage1(PortfolioBuilder.Config);
+            ApplicationState.PortfolioAnalyzer = new PortfolioAnalyzer();
+            ApplicationState.PortfolioAnalyzer.Stage1(ApplicationState.Config);
         }
         catch (Exception e)
         {

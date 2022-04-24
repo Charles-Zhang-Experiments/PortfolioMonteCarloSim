@@ -46,7 +46,7 @@ The whole solution is written entirely in C# (with some JavaScript and HTML), an
 
 1. (.Net Core Class Library) PortfolioRisk.Core: Main solution logic;
 2. (.Net Core Console Program) Risk Terminal: CLI entrypoint for the solution;
-3. (.Net Core Blazor Web Assembly Application) Portfolio Builder Web App: Web-based interface for the solution;
+3. (.Net Core Blazor Web Assembly Application) Portfolio Builder: Web-based interface for the solution;
 4. (.Net WPF Application) ChartViewer: A small utility program providing line chart visualization for simulation outcome.
 
 ## PortfolioRisk.Core
@@ -62,9 +62,9 @@ Example: `RiskTerminal -t 2,000,000 -a SPY XIU -w 1 1 -f SPY XIU USD/CAD -s 2017
 
 Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample data as in Question 1.
 
-## Portfolio Builder Web App
+## Portfolio Builder
 
-An interactive single-page Blazor web app that allows construct and analysis of portfolio risk through web interface.
+An interactive web app that allows construct and analysis of portfolio risk through web interface.
 
 This can be further improved with more sophisticated background worker management when risk data gets large.
 

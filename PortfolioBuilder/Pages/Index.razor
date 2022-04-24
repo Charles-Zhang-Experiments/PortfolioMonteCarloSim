@@ -1,18 +1,18 @@
 ﻿@page "/"
 @using PortfolioRisk.Core
 @using System.Collections.ObjectModel
-@using PortfolioBuilderWebApp.Models
+@using PortfolioBuilder.Models
 @using PortfolioRisk.Core.DataSourceService
 @using PortfolioRisk.Core.DataTypes
 
-<EditForm Model="@PortfolioBuilder.Config" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@ApplicationState.Config" OnValidSubmit="@HandleValidSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
     
     <h1 class="text-center">History Time Range</h1>
-    <p class="text-center"><InputDate @bind-Value="PortfolioBuilder.Config.StartDate" />-<InputDate @bind-Value="PortfolioBuilder.Config.EndDate" /></p>
+    <p class="text-center"><InputDate @bind-Value="ApplicationState.Config.StartDate" />-<InputDate @bind-Value="ApplicationState.Config.EndDate" /></p>
 
-    <p>Total Allocation (in CAD): <InputNumber @bind-Value="PortfolioBuilder.Config.TotalAllocation" /></p>
+    <p>Total Allocation (in CAD): <InputNumber @bind-Value="ApplicationState.Config.TotalAllocation" /></p>
 
     @* <button type="submit">Submit</button> *@
     
@@ -68,10 +68,10 @@
         if (newAsset.Currency == AssetCurrency.USD)
             Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
 
-        PortfolioBuilder.Config.Assets = Assets.Select(a => a.Symbol).ToList();
-        PortfolioBuilder.Config.Factors = Factors.Select(f => f.Symbol).ToList();
-        PortfolioBuilder.Config.Weights = Assets.Select(a => a.Weight).ToList();
-        PortfolioBuilder.Config.NormalizeWeights();
+        ApplicationState.Config.Assets = Assets.Select(a => a.Symbol).ToList();
+        ApplicationState.Config.Factors = Factors.Select(f => f.Symbol).ToList();
+        ApplicationState.Config.Weights = Assets.Select(a => a.Weight).ToList();
+        ApplicationState.Config.NormalizeWeights();
     }
     private void RemovePortfolioAsset(AssetDefinition oldAsset)
     {
@@ -93,8 +93,8 @@
     {
         if (string.IsNullOrEmpty(definition.Symbol)) return "#";
 
-        DateTime configStartDate = PortfolioBuilder.Config.StartDate!.Value;
-        DateTime configEndDate = PortfolioBuilder.Config.EndDate!.Value;
+        DateTime configStartDate = ApplicationState.Config.StartDate!.Value;
+        DateTime configEndDate = ApplicationState.Config.EndDate!.Value;
         return $"https://ca.finance.yahoo.com/quote/{definition.Symbol}/history?period1={YahooFinanceHelper.ConvertTimeFormat(configStartDate)}&period2={YahooFinanceHelper.ConvertTimeFormat(configEndDate)}&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true";
     }
     #endregion

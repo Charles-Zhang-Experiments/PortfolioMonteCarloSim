@@ -1,6 +1,6 @@
 ﻿using PortfolioRisk.Core.DataTypes;
 
-namespace PortfolioBuilderWebApp.Models
+namespace PortfolioBuilder.Models
 {
     public class AssetDefinition
     {

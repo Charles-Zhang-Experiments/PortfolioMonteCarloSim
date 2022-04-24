@@ -1,0 +1,44 @@
+﻿@page "/report"
+@using PortfolioRisk.Core
+@using PortfolioRisk.Core.DataSourceService
+
+<h1>Report</h1>
+
+@if (ApplicationState.PortfolioAnalyzer != null
+    && ApplicationState.PortfolioAnalyzer.TimeSeries != null
+    && ApplicationState.PortfolioAnalyzer.TotalReturns != null)
+{
+    <button type="button" class="btn btn-primary" @onclick="RunStage3">Generate Report</button>
+}
+
+@if(ApplicationState.Report != null)
+{
+    <div>@ApplicationState.Report.BuildSummaryText()</div>
+}
+
+<p>@_errorMessage</p>
+
+@code {
+    #region View Properties
+    private string _errorMessage;
+    #endregion
+
+    #region Methods
+    private void RunStage3()
+    {
+        AnalysisConfig config = ApplicationState.Config;
+        if (ApplicationState.PortfolioAnalyzer == null) return;
+        
+        try
+        {
+            ApplicationState.Report = ApplicationState.PortfolioAnalyzer.Stage3(config);
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            _errorMessage = "An error occured during simulation.\n";
+            _errorMessage += e.Message;
+        }
+    }
+    #endregion
+}

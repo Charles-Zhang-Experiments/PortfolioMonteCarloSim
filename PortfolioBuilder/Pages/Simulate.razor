@@ -3,8 +3,8 @@
 
 <h1>Simulate</h1>
 
-@if (PortfolioBuilder.PortfolioAnalyzer == null
-    || PortfolioBuilder.PortfolioAnalyzer.TotalReturns == null)
+@if (ApplicationState.PortfolioAnalyzer == null
+    || ApplicationState.PortfolioAnalyzer.TotalReturns == null)
 {
     <button type="button" class="btn btn-primary" @onclick="RunStage2">Simulate</button>
 }
@@ -23,12 +23,12 @@ else
     #region Methods
     private void RunStage2()
     {
-        AnalysisConfig config = PortfolioBuilder.Config;
-        if (PortfolioBuilder.PortfolioAnalyzer == null) return;
+        AnalysisConfig config = ApplicationState.Config;
+        if (ApplicationState.PortfolioAnalyzer == null) return;
         
         try
         {
-            PortfolioBuilder.PortfolioAnalyzer.Stage2();
+            ApplicationState.PortfolioAnalyzer.Stage2();
         }
         catch (Exception e)
         {
