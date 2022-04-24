@@ -1,5 +1,14 @@
 ﻿@page "/fetchdata"
 @using PortfolioRisk.Core
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Common.Axes
+@using ChartJs.Blazor.Common.Enums
+@using ChartJs.Blazor.Common.Time
+@using ChartJs.Blazor.LineChart
+@using ChartJs.Blazor.Util
+@using System.Drawing
+@using PortfolioBuilder.Models
+@using PortfolioRisk.Core.DataTypes
 
 <h1>Fetch Data</h1>
 
@@ -10,8 +19,26 @@
 }
 else
 {
-    // Display time series
-    <CartesianChart Series="Series"/>
+    <p>
+        Proceed to <NavLink class="link-dark" href="simulate">
+                   <span class="oi oi-bolt" aria-hidden="true"></span> Simulate
+               </NavLink> for simulation.
+    </p>
+    // Display Scenarios
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            @(_displayToggle ?? "All Symbols")
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <button class="dropdown-item" @onclick="@(()=>SwitchDisplay("All Symbols"))">All Symbols</button>
+            @foreach ((string symbol, List<TimeSeries> _) in ApplicationState.PortfolioAnalyzer.TimeSeries)
+            {
+                <button class="dropdown-item" @onclick="() => SwitchDisplay(symbol)">@symbol</button>
+            }
+        </div>
+    </div>
+    
+    <Chart Config=@_chartConfig></Chart>
 }
 
 <p>@_errorMessage</p>
@@ -19,6 +46,8 @@ else
 @code {
     #region View Properties
     private string _errorMessage;
+    private string _displayToggle = null;
+    private LineConfig _chartConfig;
     #endregion
 
     #region Events
@@ -26,10 +55,22 @@ else
     {
         ApplicationState.RefreshConfig();
         ApplicationState.RefreshConfig();
+        
+        if(ApplicationState.PortfolioAnalyzer != null)
+            _chartConfig = InitializeChart(ApplicationState.PortfolioAnalyzer);
+    }
+    private void SwitchDisplay(string symbol)
+    {
+        _displayToggle = symbol;
+        if (symbol.ToLower() == "all symbols")
+            _displayToggle = null;
+        
+        _chartConfig.Data.Datasets.Clear();
+        PopulateTimeSeries(_chartConfig, ApplicationState.PortfolioAnalyzer.TimeSeries);
     }
     #endregion
 
-    #region Methods
+    #region Routines
     private void FetchAndRun()
     {
         AnalysisConfig config = ApplicationState.Config;
@@ -49,12 +90,115 @@ else
         {
             ApplicationState.PortfolioAnalyzer = new PortfolioAnalyzer();
             ApplicationState.PortfolioAnalyzer.Stage1(ApplicationState.Config);
+            
+            _chartConfig = InitializeChart(ApplicationState.PortfolioAnalyzer);
         }
         catch (Exception e)
         {
             _errorMessage = "An error occured during analysis.\n";
             _errorMessage += e.Message;
         }
+    }
+    private LineConfig InitializeChart(PortfolioAnalyzer analyzer)
+    {
+        if (analyzer.TimeSeries == null)
+            return null;
+
+        var config = InitializeLineConfig();
+        PopulateTimeSeries(config, analyzer.TimeSeries);
+        return config;
+    }
+    LineConfig InitializeLineConfig()
+    {
+        LineConfig config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Time Series"
+                },
+                Tooltips = new Tooltips
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Hover = new Hover
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new TimeAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Date"
+                            },
+                            Time = new TimeOptions
+                            {
+                                TooltipFormat = "ll HH:mm"
+                            },
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Value"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        return config;
+    }
+    LineConfig PopulateTimeSeries(LineConfig config, Dictionary<string, List<TimeSeries>> series)
+    {
+        DateTime[] timeColumn = null;
+        foreach ((string symbol, List<TimeSeries> timeSeries) in series)
+        {
+            if (_displayToggle != null && symbol != _displayToggle) continue;
+                
+            timeColumn ??= timeSeries.Select(ts => ts.Date).ToArray();
+            IDataset<TimePoint> timePoints = new LineDataset<TimePoint>()
+            {
+                Label = $"{symbol} ({GetCurrency(symbol)})",
+                BackgroundColor = ColorUtil.FromDrawingColor(Color.SeaGreen),
+                BorderColor = ColorUtil.FromDrawingColor(Color.SeaGreen),
+                Fill = FillingMode.Disabled
+            };
+            double[] data = timeSeries.Select(ts => Math.Round(ts.Value, 2)).ToArray();
+            for (int t = 0; t < timeColumn.Length; t++)
+            {
+                DateTime time = timeColumn[t];
+                timePoints.Add(new TimePoint(time, data[t]));
+            }
+
+            config.Data.Datasets.Add(timePoints);
+        }
+        return config;
+    }
+    #endregion
+
+    #region Helper
+    string GetCurrency(string symbol)
+    {
+        Dictionary<string, AssetCurrency> lookup = new Dictionary<string, AssetCurrency>();
+        foreach (AssetDefinition def in ApplicationState.Assets.Union(ApplicationState.Factors))
+            lookup[def.Symbol] = def.Currency;
+
+        if (lookup.ContainsKey(symbol))
+            return lookup[symbol].ToString();
+        return AssetCurrency.CAD.ToString();
     }
     #endregion
 }

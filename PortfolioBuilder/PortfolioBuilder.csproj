@@ -8,4 +8,8 @@
       <ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="ChartJs.Blazor.Fork" Version="2.0.2" />
+    </ItemGroup>
+
 </Project>

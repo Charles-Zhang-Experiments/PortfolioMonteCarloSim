@@ -27,6 +27,9 @@ namespace PortfolioRisk.Core
             // Report
             Stage3(config);
         }
+        #endregion
+
+        #region Web Interface
         public void Stage1(AnalysisConfig config)
         {
             // Normalize weights

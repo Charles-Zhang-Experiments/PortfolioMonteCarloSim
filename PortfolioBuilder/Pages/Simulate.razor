@@ -1,16 +1,52 @@
 ﻿@page "/simulate"
 @using PortfolioRisk.Core
+@using ChartJs.Blazor.LineChart
+@using ChartJs.Blazor.Util
+@using PortfolioBuilder.Models
+@using PortfolioRisk.Core.DataTypes
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Common.Axes
+@using ChartJs.Blazor.Common.Enums
+@using ChartJs.Blazor.Common.Time
+@using System.Drawing
+@using PortfolioRisk.Core.Algorithm
 
 <h1>Simulate</h1>
 
-@if (ApplicationState.PortfolioAnalyzer == null
-    || ApplicationState.PortfolioAnalyzer.TotalReturns == null)
+@if (ApplicationState.PortfolioAnalyzer == null)
+{
+    <p>Perform <NavLink class="link-dark" href="fetchdata">
+        <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+    </NavLink> first before simulation.</p>
+}
+else if (ApplicationState.PortfolioAnalyzer.TotalReturns == null)
 {
     <button type="button" class="btn btn-primary" @onclick="RunStage2">Simulate</button>
 }
 else
 {
     <p>Simulation is finished.</p>
+    <p>
+        Proceed to <NavLink class="link-dark" href="report">
+           <span class="oi oi-document" aria-hidden="true"></span> Report
+       </NavLink> to see report of risk numbers.
+    </p>
+    
+    // Display sample scenarios
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            All Symbols
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <button class="dropdown-item" @onclick="@(()=>SwitchDisplay("All Symbols"))">All Symbols</button>
+            @foreach (string symbol in ApplicationState.PortfolioAnalyzer.TotalReturns.First().Keys)
+            {
+                <button class="dropdown-item" @onclick="() => SwitchDisplay(symbol)">@symbol</button>
+            }
+        </div>
+    </div>
+    
+    <Chart Config=@_chartConfig></Chart>
 }
 
 <p>@_errorMessage</p>
@@ -18,6 +54,25 @@ else
 @code {
     #region View Properties
     private string _errorMessage;
+    private LineConfig _chartConfig;
+    private string _displayToggle = null;
+    #endregion
+    
+    #region Events
+    protected override void OnInitialized()
+    {
+        if (ApplicationState.PortfolioAnalyzer != null)
+            _chartConfig = InitializeChart(ApplicationState.PortfolioAnalyzer);
+    }
+    private void SwitchDisplay(string symbol)
+    {
+        _displayToggle = symbol;
+        if (symbol.ToLower() == "all symbols")
+            _displayToggle = null;
+        
+        _chartConfig.Data.Datasets.Clear();
+        PopulateScenarios(_chartConfig, ApplicationState.PortfolioAnalyzer.TotalReturns);
+    }
     #endregion
 
     #region Methods
@@ -35,6 +90,110 @@ else
             _errorMessage = "An error occured during simulation.\n";
             _errorMessage += e.Message;
         }
+    }
+    #endregion
+    
+    #region Routines
+    private LineConfig InitializeChart(PortfolioAnalyzer analyzer)
+    {
+        var config = InitializeLineConfig();
+        PopulateScenarios(config, analyzer.TotalReturns);
+        return config;
+    }
+    LineConfig InitializeLineConfig()
+    {
+        LineConfig config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Scenarios (Total Returns)"
+                },
+                Tooltips = new Tooltips
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Hover = new Hover
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new CategoryAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Day"
+                            }
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Value"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        for (int i = 0; i < HistoricalSimulation.YearReturnDays; i++)
+        {
+            config.Data.Labels.Add((i+1).ToString());   // This determines how many items to show
+        }
+        return config;
+    }
+    LineConfig PopulateScenarios(LineConfig config, List<Dictionary<string, double[]>> series)
+    {
+        if (series == null)
+            return config;
+        
+        // Visualize only 10 scenarios
+        series = series.Take(10).ToList();
+
+        int i = 0;
+        foreach (Dictionary<string, double[]> scenario in series)
+        {
+            i++;
+            foreach ((string symbol, double[] dayReturns) in scenario)
+            {
+                if (_displayToggle != null && symbol != _displayToggle) continue;
+            
+                IDataset<double> lineDataset = new LineDataset<double>(dayReturns.Select(r => Math.Round(r, 2)))
+                {
+                    Label = $"{symbol} ({GetCurrency(symbol)}) - Scenario {i}",
+                    BackgroundColor = ColorUtil.FromDrawingColor(Color.Salmon),
+                    BorderColor = ColorUtil.FromDrawingColor(Color.Salmon),
+                    Fill = FillingMode.Disabled
+                };
+
+                config.Data.Datasets.Add(lineDataset);
+            }
+        }
+        return config;
+    }
+    #endregion
+
+    #region Helper
+    string GetCurrency(string symbol)
+    {
+        Dictionary<string, AssetCurrency> lookup = new Dictionary<string, AssetCurrency>();
+        foreach (AssetDefinition def in ApplicationState.Assets.Union(ApplicationState.Factors))
+            lookup[def.Symbol] = def.Currency;
+
+        if (lookup.ContainsKey(symbol))
+            return lookup[symbol].ToString();
+        return AssetCurrency.CAD.ToString();
     }
     #endregion
 }

@@ -10,6 +10,14 @@
 {
     <button type="button" class="btn btn-primary" @onclick="RunStage3">Generate Report</button>
 }
+else
+{
+    <p>Perform <NavLink class="link-dark" href="fetchdata">
+            <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+        </NavLink> and <NavLink class="link-dark" href="simulate">
+           <span class="oi oi-bolt" aria-hidden="true"></span> Simulate
+       </NavLink> first before simulation.</p>
+}
 
 @if(ApplicationState.Report != null)
 {

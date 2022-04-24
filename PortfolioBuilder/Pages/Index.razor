@@ -14,10 +14,12 @@
 
     <div class="row">
         <div class="col-8">
+            <p>Enter the constituents of your portfolio below; 
+                Make sure the currency matches the return value as indicated from <a href="https://ca.finance.yahoo.com/">Yahoo Finance</a>.</p>
             <p>Total Allocation (in CAD): <InputNumber @bind-Value="ApplicationState.Config.TotalAllocation"/></p>
-            
+
             @* <button type="submit">Submit</button> *@
-    
+
             @foreach (AssetDefinition definition in ApplicationState.Assets)
             {
                 <p>
@@ -30,9 +32,13 @@
                     <a href="@GeneratePreviewLink(definition)" class="link-primary" target="_blank" rel="noopener noreferrer" @onclick="UpperCaseTexts">Preview</a>
                 </p>
             }
-    
+
             <button type="button" class="btn btn-primary" @onclick="AddEntry">Add</button>
             <button type="button" class="btn btn-danger" @onclick="RemoveEntry">Remove</button>
+            
+            <p>When you are done, go to <NavLink class="link-dark" href="fetchdata">
+                                                        <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+                                                    </NavLink>.</p>
         </div>
         <div class="col-4">
             <h3>Factors</h3>
