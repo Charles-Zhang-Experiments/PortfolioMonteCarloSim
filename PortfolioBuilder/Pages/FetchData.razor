@@ -11,6 +11,7 @@
 else
 {
     // Display time series
+    <CartesianChart Series="Series"/>
 }
 
 <p>@_errorMessage</p>
@@ -18,6 +19,14 @@ else
 @code {
     #region View Properties
     private string _errorMessage;
+    #endregion
+
+    #region Events
+    protected override void OnInitialized()
+    {
+        ApplicationState.RefreshConfig();
+        ApplicationState.RefreshConfig();
+    }
     #endregion
 
     #region Methods

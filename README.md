@@ -64,13 +64,11 @@ Use command `RiskTerminal sample` or simply run `RiskTerminal` without any comma
 
 ## Portfolio Builder
 
-An interactive web app that allows construct and analysis of portfolio risk through web interface.
+An interactive web app that allows construct and analysis of portfolio risk through web interface. This can be further improved with more sophisticated background worker management when risk data gets large.
 
-This can be further improved with more sophisticated background worker management when risk data gets large.
+For the sake of simplicity and demonstration purpose, the web interface was originally built with front-end only technology without depending on a server; This puts some restrictions on computing power and in this case also to the accessibility of Yahoo Finance API due to cross-origin access issues. Ideally for more practical purpose, one would seperate the front-end from the back-end so there is more flexibility in implementation.
 
-For the sake of simplicity and demonstration purpose, the web interface is built with front-end only technology without depending on a server; This puts some restrictions on computing power and in this case also to the accessibility of Yahoo Finance API due to cross-origin access issues.
-
-Ideally for more practical purpose, one would seperate the front-end from the back-end so there is more flexibility in implementation.
+**Later this is changed to a server-client application however the state management is not fully migrated to a proper server setup with multiple-client facing scenario**.
 
 ## Offline Data Sources (Folder)
 

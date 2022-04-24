@@ -12,36 +12,46 @@
     <h1 class="text-center">History Time Range</h1>
     <p class="text-center"><InputDate @bind-Value="ApplicationState.Config.StartDate" />-<InputDate @bind-Value="ApplicationState.Config.EndDate" /></p>
 
-    <p>Total Allocation (in CAD): <InputNumber @bind-Value="ApplicationState.Config.TotalAllocation" /></p>
-
-    @* <button type="submit">Submit</button> *@
+    <div class="row">
+        <div class="col-8">
+            <p>Total Allocation (in CAD): <InputNumber @bind-Value="ApplicationState.Config.TotalAllocation"/></p>
+            
+            @* <button type="submit">Submit</button> *@
     
-    @foreach (AssetDefinition definition in Assets)
-    {
-        <p>
-            <InputText @bind-Value="definition.Symbol"/>
-            <InputSelect class="form-select" @bind-Value="definition.Currency">
-                <option value="CAD">CAD</option>
-                <option value="USD">USD</option>
-            </InputSelect>
-            <InputNumber @bind-Value="definition.Weight"/>
-            <a href="@GeneratePreviewLink(definition)" class="link-primary" target="_blank" rel="noopener noreferrer" @onclick="UpperCaseTexts">Preview</a>
-        </p>
-    }
+            @foreach (AssetDefinition definition in ApplicationState.Assets)
+            {
+                <p>
+                    <InputText @bind-Value="definition.Symbol"/>
+                    <InputSelect class="form-select" @bind-Value="definition.Currency">
+                        <option value="CAD">CAD</option>
+                        <option value="USD">USD</option>
+                    </InputSelect>
+                    <InputNumber @bind-Value="definition.Weight"/>
+                    <a href="@GeneratePreviewLink(definition)" class="link-primary" target="_blank" rel="noopener noreferrer" @onclick="UpperCaseTexts">Preview</a>
+                </p>
+            }
     
-    <button type="button" class="btn btn-primary" @onclick="AddEntry">Add</button>
-    <button type="button" class="btn btn-danger" @onclick="RemoveEntry">Remove</button>
+            <button type="button" class="btn btn-primary" @onclick="AddEntry">Add</button>
+            <button type="button" class="btn btn-danger" @onclick="RemoveEntry">Remove</button>
+        </div>
+        <div class="col-4">
+            <h3>Factors</h3>
+            <p></p>
+            @foreach (AssetDefinition definition in ApplicationState.Factors)
+            {
+                <span>@definition.Symbol (@definition.Currency): @definition.Weight</span><hr/>
+            }
+        </div>
+    </div>
 </EditForm>
 
 @code{
-    #region View Binding
-    private HashSet<AssetDefinition> Assets { get; set; } = new HashSet<AssetDefinition>();
-    private HashSet<AssetDefinition> Factors { get; set; } = new HashSet<AssetDefinition>();
-    #endregion
-
     #region Events
     protected override void OnInitialized()
     {
+        ApplicationState.Assets = new HashSet<AssetDefinition>();
+        ApplicationState.Factors = new HashSet<AssetDefinition>();
+        
         AddPortfolioAsset(new AssetDefinition("SPY", AssetCurrency.USD, 1));
         AddPortfolioAsset(new AssetDefinition("XIU", AssetCurrency.CAD, 1));
     }
@@ -53,8 +63,8 @@
 
     private void RemoveEntry()
     {
-        if (Assets.Count != 0)
-            RemovePortfolioAsset(Assets.Last());
+        if (ApplicationState.Assets.Count != 0)
+            RemovePortfolioAsset(ApplicationState.Assets.Last());
         UpperCaseTexts();
     }
     #endregion
@@ -62,25 +72,22 @@
     #region Routines
     private void AddPortfolioAsset(AssetDefinition newAsset)
     {
-        Assets.Add(newAsset);
-        Factors.Add(newAsset);
+        ApplicationState.Assets.Add(newAsset);
+        ApplicationState.Factors.Add(newAsset);
         
         if (newAsset.Currency == AssetCurrency.USD)
-            Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
+            ApplicationState.Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
 
-        ApplicationState.Config.Assets = Assets.Select(a => a.Symbol).ToList();
-        ApplicationState.Config.Factors = Factors.Select(f => f.Symbol).ToList();
-        ApplicationState.Config.Weights = Assets.Select(a => a.Weight).ToList();
-        ApplicationState.Config.NormalizeWeights();
+        ApplicationState.RefreshConfig();
     }
     private void RemovePortfolioAsset(AssetDefinition oldAsset)
     {
-        Assets.Remove(oldAsset);
+        ApplicationState.Assets.Remove(oldAsset);
     }
 
     private void UpperCaseTexts()
     {
-        foreach (AssetDefinition assetDefinition in Assets)
+        foreach (AssetDefinition assetDefinition in ApplicationState.Assets)
         {
             if(assetDefinition.Symbol != null)
                 assetDefinition.Symbol = assetDefinition.Symbol.ToUpper();
