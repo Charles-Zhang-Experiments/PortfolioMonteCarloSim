@@ -10,6 +10,8 @@ The original programming project contains three parts (three questions), a summa
 2. Question 2: Make comments on the legitimacy of the methodology and implementation results;
 3. Question 3: Provide a web GUI interface for Question 1.
 
+![Example](./Example/Example.png)
+
 ## Overview
 
 There are two complications in the overall solution (e.g. for Question 1):
