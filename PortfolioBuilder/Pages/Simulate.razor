@@ -170,7 +170,7 @@ else
             {
                 if (_displayToggle != null && symbol != _displayToggle) continue;
             
-                IDataset<double> lineDataset = new LineDataset<double>(dayReturns.Select(r => Math.Round(r, 2)))
+                IDataset<double> lineDataset = new LineDataset<double>(dayReturns.Select(r => Math.Round(r, 4)))
                 {
                     Label = $"{symbol} ({GetCurrency(symbol)}) - Scenario {i}",
                     BackgroundColor = ColorUtil.FromDrawingColor(Color.Salmon),

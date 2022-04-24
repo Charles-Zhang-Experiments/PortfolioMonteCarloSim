@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using LiveChartsCore.SkiaSharpView;
+using PortfolioRisk.Core.DataTypes;
 
 namespace ChartViewer
 {
@@ -22,7 +23,7 @@ namespace ChartViewer
 
             InitializeComponent();
         }
-        private App App => Application.Current as App;
+        private Report Report => (Application.Current as App)!.Report;
         private Dictionary<string, double[][]> _reportSeries;
         #endregion
         
@@ -36,17 +37,22 @@ namespace ChartViewer
         #region Routine
         private void InitializeViewData()
         {
-            _reportSeries = App.Report.PortfolioReturn.ToDictionary(pr => pr.Asset,
+            // Add display for assets
+            _reportSeries = Report.PortfolioReturn.ToDictionary(pr => pr.Asset,
                 pr => pr.Values.Take(VisualizationSampleSize).ToArray());
-            
-            if (App.Report != null)
+            // Add display for foreign exchange
+            foreach (string symbol in Report.Analyzer.TotalReturns.First()
+                .Where(tr => Report.PortfolioReturn.All(pr => pr.Asset != tr.Key)).Select(k => k.Key))
+                _reportSeries.Add(symbol, Report.Analyzer.TotalReturns.Take(VisualizationSampleSize).Select(tr => tr[symbol].Select(v => v * Report.CurrentPrices[symbol]).ToArray()).ToArray());
+
+            if (Report != null)
             {
                 (string symbol, double[][] scenarios) = _reportSeries.First();
                 
                 SeriesNames = _reportSeries.Keys.ToArray();
                 Series = GetSeriesFor(symbol, scenarios);
                 DynamicTitle = $"Visualization ({string.Join(", ", _seriesNames)})";
-                SummaryText = App.Report.BuildSummaryText(currentPriceLast: true);
+                SummaryText = Report.BuildSummaryText(currentPriceLast: true);
             }
             else
             {

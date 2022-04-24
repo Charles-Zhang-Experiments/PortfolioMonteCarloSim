@@ -26,9 +26,9 @@ namespace PortfolioRisk.Core
 
         #region Public Interface Method
         public Report BuildReport(AnalysisConfig config,
-            Dictionary<string, AssetCurrency> annotateAssetCurrency)
+            Dictionary<string, AssetCurrency> annotateAssetCurrency, PortfolioAnalyzer analyzer)
         {
-            Report report = new Report(CurrentPrices, PriceDate);
+            Report report = new Report(CurrentPrices, PriceDate){ Analyzer = analyzer };
             
             NormalizeCurrencyForPnL(config, annotateAssetCurrency, report);
             ComputeOriginalInvestmentSize(config, report);
@@ -50,57 +50,132 @@ namespace PortfolioRisk.Core
         #region Routines
         private static void ComputeOriginalInvestmentSize(AnalysisConfig config, Report report)
         {
+            // Size of each asset
             report.InvestmentSize = report.PortfolioReturn.ToDictionary(
                 pnl => pnl.Asset,
                 pnl => config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
+            
+            // Size of currency
+            report.CurrencySize = new Dictionary<AssetCurrency, double>();
+            Dictionary<string, AssetCurrency> mapping = config.CurrencyMapping;
+            foreach (AssetCurrency currency in config.AssetCurrencies.Distinct())
+            {
+                if (currency == AssetCurrency.USD_TO_CAD)
+                    throw new InvalidOperationException("Unexpected asset type");
+                
+                report.CurrencySize.Add(
+                    currency, 
+                    report.InvestmentSize
+                        .Where(i => mapping[i.Key] == currency)
+                        .Select(i => i.Value).Sum());
+            }
         }
         private void ComputeETL(AnalysisConfig config, Report report)
         {
-            report.ETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
-                pnl.Values.Select(pv => pv.Last()).OrderBy(d => d)
+            report.ETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl => 
+                ETL(pnl.Values) / CurrentPrices[pnl.Asset] * report.InvestmentSize[pnl.Asset]);
+
+            PnL usdToCad = report.FactorReturn.Single(fr => fr.Type == PnLType.ExchangeRate);
+            double fx = ETL(usdToCad.Values) / CurrentPrices[usdToCad.Asset] * report.CurrencySize[AssetCurrency.USD];
+            Dictionary<string, double> assetFactors = report.FactorReturn
+                .Where(fr => fr.Type == PnLType.Asset)
+                .ToDictionary(
+                    fr => fr.Asset, 
+                    fr => ETL(fr.Values) / CurrentPrices[fr.Asset] * report.InvestmentSize[fr.Asset]);
+            report.ETLFxFactors = assetFactors.ToDictionary(af => af.Key, af => new FXFactor()
+            {
+                Self = af.Value,
+                FX = fx
+            });
+            
+            double ETL(double[][] scenarios)
+                => scenarios.Select(pv => pv.Last()).OrderBy(d => d)
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
-                    .Average() / CurrentPrices[pnl.Asset] * report.InvestmentSize[pnl.Asset]);
+                    .Average();
         }
         private void ComputeMaxETL(AnalysisConfig config, Report report)
         {
             report.MaxETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
-                pnl.Values.Select(pv => pv.Min()).OrderBy(d => d)
+                MaxETL(pnl.Values) / CurrentPrices[pnl.Asset]  * config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
+            
+            PnL usdToCad = report.FactorReturn.Single(fr => fr.Type == PnLType.ExchangeRate);
+            double fx = MaxETL(usdToCad.Values) / CurrentPrices[usdToCad.Asset] * report.CurrencySize[AssetCurrency.USD];
+            Dictionary<string, double> assetFactors = report.FactorReturn
+                .Where(fr => fr.Type == PnLType.Asset)
+                .ToDictionary(
+                    fr => fr.Asset, 
+                    fr => MaxETL(fr.Values) / CurrentPrices[fr.Asset] * report.InvestmentSize[fr.Asset]);
+            report.MaxETLFxFactors = assetFactors.ToDictionary(af => af.Key, af => new FXFactor()
+            {
+                Self = af.Value,
+                FX = fx
+            });
+
+            double MaxETL(double[][] scenarios)
+                => scenarios.Select(pv => pv.Min()).OrderBy(d => d)
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
-                    .Average() / CurrentPrices[pnl.Asset]  * config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
+                    .Average();
         }
         private void NormalizeCurrencyForPnL(AnalysisConfig analysisConfig, IReadOnlyDictionary<string, AssetCurrency> annotateAssetCurrency, Report report)
         {
             foreach (string asset in analysisConfig.Assets)
             {
-                double[][] pnl = SimulationResults.Select(sr => sr[asset]).ToArray();
-
                 switch (annotateAssetCurrency[asset])
                 {
-                    case AssetCurrency.USD_TO_CAD:
-                        throw new ArgumentException("Wrong asset type.");
                     case AssetCurrency.USD:
                     {
+                        double[][] pnl = SimulationResults.Select(sr => sr[asset]).ToArray();
+                        
+                        // Report self as factor
+                        report.FactorReturn.Add(new PnL()
+                        {
+                            Asset = asset,
+                            Values = ElementWiseMultiply(pnl, CurrentPrices[asset]), // This is the price of the asset if FX rate is not changing,
+                            Type = PnLType.Asset
+                        });
+                        
                         // Find available converter
                         string converter = annotateAssetCurrency.Single(ac => ac.Value == AssetCurrency.USD_TO_CAD).Key;
                         double[][] exchangeRate = SimulationResults.Select(sr => sr[converter]).ToArray();
-
+                        
+                        // Report Exchange Rate as factor
+                        if (report.FactorReturn.All(fr => fr.Asset != converter))
+                        {
+                            report.FactorReturn.Add(new PnL()
+                            {
+                                Asset = converter,
+                                Values = ElementWiseMultiply(exchangeRate, CurrentPrices[converter]),    // This is the price of FX irrelevant of underlying asset
+                                Type = PnLType.ExchangeRate
+                            });
+                        }
+                        
                         // Convert to CAD
-                        pnl = ElementWiseMultiply(pnl, exchangeRate, CurrentPrices[asset] / CurrentPrices[converter]);
+                        report.PortfolioReturn.Add(new PnL()
+                        {
+                            Asset = asset,
+                            Values = ElementWiseMultiply(pnl, exchangeRate, CurrentPrices[asset] / CurrentPrices[converter]),
+                            Type = PnLType.Asset
+                        });
                         break;
                     }
                     case AssetCurrency.CAD:
+                    {
+                        double[][] pnl = SimulationResults.Select(sr => sr[asset]).ToArray();
+                        
                         // Convert return to dollar value
-                        pnl = ElementWiseMultiply(pnl, CurrentPrices[asset]);
+                        report.PortfolioReturn.Add(new PnL()
+                        {
+                            Asset = asset,
+                            Values = ElementWiseMultiply(pnl, CurrentPrices[asset]),
+                            Type = PnLType.Asset
+                        });
                         break;
+                    }
                     default:
                         throw new ArgumentOutOfRangeException();
+                    case AssetCurrency.USD_TO_CAD:
+                        throw new ArgumentException("Wrong asset type.");   
                 }
-
-                report.PortfolioReturn.Add(new PnL()
-                {
-                    Asset = asset,
-                    Values = pnl
-                });
             }
         }
         #endregion

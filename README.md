@@ -12,12 +12,15 @@ The original programming project contains three parts (three questions), a summa
 
 ![Example](./Example/Example.png)
 
+The automatically generated ETL breakdown provides a preliminary analysis of the factors contributing to the final risk value.
+
 ## Overview
 
 There are two complications in the overall solution (e.g. for Question 1):
 
 1. **Data downloading and preprocessing**: For manual operations one can download CSV files from the web and manually clean up the data for missing entries and mis-matching dates, but for generic general-purpose API-based data source, the program must be smart enough to automatically handle errors in data. This part of code is mostly done inside `PortfolioAnalyzer` class.
 2. **Data simulation and processing**: When proper data is fetched and ready for processing, the actual simulation is quite trivial; This is done with the help of classes inside `Algorithm` namespace.
+3. **Report generation**: The actual ETL and MaxETL computations are done by `Reporter` class, which is seperate from the simulation process. It processes the simulated result and perform additional transformations on the return data to obtain risk values.
 
 ## How to Run
 
@@ -26,7 +29,7 @@ This solution requires [.Net Core SDK 3.1](https://dotnet.microsoft.com/en-us/do
 For compiling and run:
 
 1. Open *OTPPInterview2022.sln* in Visual Studio or Rider;
-2. Set *RiskTerminal* or *PortfolioBuilder* as starting project;
+2. Set **RiskTerminal** or **PortfolioBuilder** as starting project;
 3. Press *F5* to run, It should take less than a minute to execute after compilation is done; 
 4. The outcome will be shown inside the CLI console output and inside a pop-up window.
 
@@ -42,7 +45,7 @@ For quick online test:
 
 ## Future Improvements
 
-The risk analytics part of the program can easily be improved; That is, for final risk numbers, we can generate contribution from exchange rate for easier analysis.
+The risk analytics part of the program can be further improved; That is, for final risk numbers, we can generate contribution from exchange rate for easier analysis. (This is done in a later patch)
 
 # Software Components
 
@@ -50,7 +53,7 @@ The whole solution is written entirely in C# (with some JavaScript and HTML), an
 
 1. (.Net Core Class Library) PortfolioRisk.Core: Main solution logic;
 2. (.Net Core Console Program) Risk Terminal: CLI entrypoint for the solution;
-3. (.Net Core Blazor Web Assembly Application) Portfolio Builder: Web-based interface for the solution;
+3. (.Net Core Blazor Server Application) Portfolio Builder: Web-based interface for the solution;
 4. (.Net WPF Application) ChartViewer: A small utility program providing line chart visualization for simulation outcome.
 
 ## PortfolioRisk.Core
@@ -65,6 +68,8 @@ Command format: `RiskTerminal -t <Total Allocation> -a <Assets> -c <Asset Curren
 Example: `RiskTerminal -t 2,000,000 -a SPY XIU -c USD CAD -w 1 1 -f SPY XIU USD/CAD -s 2017-01-01 -e 2021-12-31`
 
 Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample data as in Question 1.
+
+Due to time constraint, input parameters beyond sample data is not fully tested.
 
 ## Portfolio Builder
 
@@ -90,7 +95,7 @@ Since both the offline data and Yahoo Finance API data can have missing dates, o
 
 1. Data needs clean up, some are back-filled for missing dates, the program also supports forward-fill by grabing from neighbouring future dates in case no historical data is available, though in practice this is not observed for our sample data;
 2. For "PnL" calculation, the program currently shows the final projected market value of the asset instead of its actual "loss";
-3. Due to time constraint, the current visualization for CLI program is not showing currency visualization, this would be helpful in understanding the trend; It can be added in future implementation. However, this is available in the website interface.
+3. (Done in the newest update) ~~Due to time constraint, the current visualization for CLI program is not showing currency visualization, this would be helpful in understanding the trend; It can be added in future implementation.~~ However, this is available in the website interface.
 
 ## Analysis
 
@@ -98,30 +103,33 @@ For a *$CAD2B* portfolio with **SPY** and **XIU** weighted *1:1* invested on **2
 
 ```
 ETL:
-   SPY:    756,870,318 (Risk Exposure: -243,129,681)
-   XIU:    865,833,837 (Risk Exposure: -134,166,162)
- Total: 1,622,704,157
+   SPY:    748,217,165 (Risk Exposure: -251,782,835)
+     -Self:    908,017,413 (Risk Exposure:  -91,982,587)
+     -FX:      895,935,482 (Risk Exposure: -104,064,517)
+   XIU:    849,647,094 (Risk Exposure: -150,352,905)
+ Total: 1,597,864,260
 Max ETL:
-   SPY:    606,759,085 (Risk Exposure: -393,240,915)
-   XIU:    682,617,963 (Risk Exposure: -317,382,036)
- Total: 1,289,377,049
+   SPY:    597,303,982 (Risk Exposure: -402,696,017)
+     -Self:    706,506,935 (Risk Exposure: -293,493,065)
+     -FX:      877,467,869 (Risk Exposure: -122,532,131)
+   XIU:    671,226,288 (Risk Exposure: -328,773,712)
+ Total: 1,268,530,271
 Current Price (2022-04-24): SPY: 426.04, XIU: 32.48, USD/CAD: 1.27
 ```
 
 There are two ways to make sense out of this: graphically and analytically based on constituting components.
 
-Graphically speaking (though this screenshot contains only the first 10 scenarios), SPY has a stronger upper trend and XIU is more affected by negative trends.
+Graphically or intuitively (though this screenshot contains only the first 10 scenarios), it just helps to see what those scenarios actually look like:
 
 ![SPY](./Example/Example-SPY.png)
 
 ![XIU](./Example/Example-XIU.png)
 
-
-Another way is to consider the factors - for a total final simulated portfolio value of *1,622,704,157*, *756,870,318* comes from SPY and *865,833,837* comes from XIU. Out of this, since SPY is originally rated in USD, we should also be able to get its risk value in USD and get the USD/CAD exchange rate risk.
+Another way is to consider the factors - for a total final simulated portfolio value of *1,597,864,260*, *748,217,165* comes from SPY and *849,647,094* comes from XIU. Out of this, since SPY is originally rated in USD, we should also be able to get its risk value in USD and get the USD/CAD exchange rate risk independantly: those are *908,017,413* (SPY with exchange rate not changing) and *895,935,482* (Investment in USD alone without considering changes in SPY price). We can see that *-91,982,587* and *-104,064,517* adds up roughly to *-251,782,835*.
 
 <!--
 * XIU
-* SPY (USD)
+* SPY (USD): SPY Total Return * Initial CAD
 * USD/CAD
-* SPY (USD) + USD/CAD
+* SPY (USD) + USD/CAD: SPY CAD * USD/CAD
 -->

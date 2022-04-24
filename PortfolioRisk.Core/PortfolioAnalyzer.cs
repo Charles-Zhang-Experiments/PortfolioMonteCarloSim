@@ -59,7 +59,7 @@ namespace PortfolioRisk.Core
         {
             // Reporting
             Reporter reporter = new Reporter(TotalReturns, GetCurrentPrices(config, out DateTime date), date);
-            Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
+            Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config), this);
             reporter.AnnounceReport(config, report);
 
             return report;

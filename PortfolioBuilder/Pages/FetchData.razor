@@ -177,7 +177,7 @@ else
                 BorderColor = ColorUtil.FromDrawingColor(Color.SeaGreen),
                 Fill = FillingMode.Disabled
             };
-            double[] data = timeSeries.Select(ts => Math.Round(ts.Value, 2)).ToArray();
+            double[] data = timeSeries.Select(ts => Math.Round(ts.Value, 4)).ToArray();
             for (int t = 0; t < timeColumn.Length; t++)
             {
                 DateTime time = timeColumn[t];
