@@ -23,19 +23,30 @@ namespace ChartViewer
             InitializeComponent();
         }
         private App App => Application.Current as App;
+        private Dictionary<string, double[][]> _reportSeries;
+        #endregion
+        
+        #region Configuration
+        /// <summary>
+        /// Don't draw all 5000 because the UI can't handle it
+        /// </summary>
+        private const int VisualizationSampleSize = 10;
         #endregion
 
         #region Routine
         private void InitializeViewData()
         {
-            if (App.Model != null)
+            _reportSeries = App.Report.PortfolioReturn.ToDictionary(pr => pr.Asset,
+                pr => pr.Values.Take(VisualizationSampleSize).ToArray());
+            
+            if (App.Report != null)
             {
-                (string symbol, double[][] scenarios) = App.Model.Series.First();
+                (string symbol, double[][] scenarios) = _reportSeries.First();
                 
-                SeriesNames = App.Model.Series.Keys.ToArray();
+                SeriesNames = _reportSeries.Keys.ToArray();
                 Series = GetSeriesFor(symbol, scenarios);
                 DynamicTitle = $"Visualization ({string.Join(", ", _seriesNames)})";
-                SummaryText = BuildSummaryText(App.Model);
+                SummaryText = App.Report.BuildSummaryText(currentPriceLast: true);
             }
             else
             {
@@ -60,22 +71,6 @@ namespace ChartViewer
                 GeometrySize = 2,
             }).ToArray();
         }
-        private string BuildSummaryText(ViewModel viewModel)
-        {
-            StringBuilder builder = new StringBuilder();
-            // ETL
-            builder.AppendLine("ETL:");
-            foreach ((string symbol, double etl) in viewModel.ETL) 
-                builder.AppendLine($" {symbol,5}:{(long)etl,15:N0}");
-            // Max ETL
-            builder.AppendLine("Max ETL:");
-            foreach ((string symbol, double maxEtl) in viewModel.MaxETL)
-                builder.AppendLine($" {symbol,5}:{(long)maxEtl,15:N0}");
-            // Current Prices
-            builder.AppendLine($"Current Price ({viewModel.PriceDate:yyyy-MM-dd}): {string.Join(", ", viewModel.CurrentPrices.Select(cp => $"{cp.Key}: {cp.Value:N2}"))}");
-
-            return builder.ToString().TrimEnd();
-        }
         #endregion
 
         #region Public View Properties
@@ -95,7 +90,7 @@ namespace ChartViewer
             if (e.AddedItems.Count != 0)
             {
                 string selection = e.AddedItems[0]?.ToString();
-                Series = GetSeriesFor(selection, App.Model.Series[selection]);
+                Series = GetSeriesFor(selection, _reportSeries[selection]);
             }
         }
         #endregion

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using PortfolioRisk.Core.DataTypes;
 
@@ -62,15 +63,8 @@ namespace PortfolioRisk.Core.DataSourceService
         #endregion
 
         #region Helpers
-        public void GetHistorical(YahooFinanceParameter parameter)
+        private void GetHistorical(YahooFinanceParameter parameter)
         {
-            string ConvertTimeFormat(DateTime input)
-            {
-                input = input.Date; // Clear out time, set to 0
-                string timeStamp = (input - new DateTime(1970, 01, 01)).TotalSeconds.ToString(CultureInfo.InvariantCulture);
-                return timeStamp;
-            }
-
             string RemapSymbols(string original)
                 => Remapping.ContainsKey(original) ? Remapping[original] : original;
 
@@ -93,12 +87,32 @@ namespace PortfolioRisk.Core.DataSourceService
             string interval = validIntervals[parameter.InputInterval];
             string csvUrl =
                 $"https://query1.finance.yahoo.com/v7/finance/download/{RemapSymbols(parameter.InputSymbol)}?period1={startTime}&period2={endTime}&interval={interval}&events=history&includeAdjustedClose=true";
-            string csvText = new WebClient().DownloadString(csvUrl);
+            string csvText = FetchUrlText(csvUrl);
             IEnumerable<ICsvLine> csv = CsvReader.ReadFromText(csvText, new CsvOptions()
             {
                 HeaderMode = HeaderMode.HeaderPresent
             });
             parameter.OutputTable = new DataGrid(csv);
+        }
+        public static string ConvertTimeFormat(DateTime input)
+        {
+            input = input.Date; // Clear out time, set to 0
+            string timeStamp = (input - new DateTime(1970, 01, 01)).TotalSeconds.ToString(CultureInfo.InvariantCulture);
+            return timeStamp;
+        }
+        #endregion
+
+        #region Helpers
+        /// <summary>
+        /// Equivalent to `new WebClient().DownloadString(url)` but more generally available, e.g. on web platform
+        /// </summary>
+        private string FetchUrlText(string url)
+        {
+            HttpClient client = new HttpClient();
+
+            using HttpResponseMessage response = client.GetAsync(url).Result;
+            using HttpContent content = response.Content;
+            return content.ReadAsStringAsync().Result;
         }
         #endregion
     }

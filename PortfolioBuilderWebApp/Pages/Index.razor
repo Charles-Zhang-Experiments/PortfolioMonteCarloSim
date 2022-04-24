@@ -1,23 +1,108 @@
 ﻿@page "/"
 @using PortfolioRisk.Core
+@using System.Collections.ObjectModel
+@using PortfolioBuilderWebApp.Models
+@using PortfolioRisk.Core.DataSourceService
+@using PortfolioRisk.Core.DataTypes
 
-<EditForm Model="@Config" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@PortfolioBuilder.Config" OnValidSubmit="@HandleValidSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
     
     <h1 class="text-center">History Time Range</h1>
-    <p class="text-center"><InputDate @bind-Value="Config.StartDate" />-<InputDate @bind-Value="Config.EndDate" /></p>
+    <p class="text-center"><InputDate @bind-Value="PortfolioBuilder.Config.StartDate" />-<InputDate @bind-Value="PortfolioBuilder.Config.EndDate" /></p>
 
-    <InputNumber id="name" @bind-Value="Config.TotalAllocation" />
+    <p>Total Allocation (in CAD): <InputNumber @bind-Value="PortfolioBuilder.Config.TotalAllocation" /></p>
 
-    <button type="submit">Submit</button>
+    @* <button type="submit">Submit</button> *@
+    
+    @foreach (AssetDefinition definition in Assets)
+    {
+        <p>
+            <InputText @bind-Value="definition.Symbol"/>
+            <InputSelect class="form-select" @bind-Value="definition.Currency">
+                <option value="CAD">CAD</option>
+                <option value="USD">USD</option>
+            </InputSelect>
+            <InputNumber @bind-Value="definition.Weight"/>
+            <a href="@GeneratePreviewLink(definition)" class="link-primary" target="_blank" rel="noopener noreferrer" @onclick="UpperCaseTexts">Preview</a>
+        </p>
+    }
+    
+    <button type="button" class="btn btn-primary" @onclick="AddEntry">Add</button>
+    <button type="button" class="btn btn-danger" @onclick="RemoveEntry">Remove</button>
 </EditForm>
 
 @code{
-    private AnalysisConfig Config = new();
-    
+    #region View Binding
+    private HashSet<AssetDefinition> Assets { get; set; } = new HashSet<AssetDefinition>();
+    private HashSet<AssetDefinition> Factors { get; set; } = new HashSet<AssetDefinition>();
+    #endregion
+
+    #region Events
+    protected override void OnInitialized()
+    {
+        AddPortfolioAsset(new AssetDefinition("SPY", AssetCurrency.USD, 1));
+        AddPortfolioAsset(new AssetDefinition("XIU", AssetCurrency.CAD, 1));
+    }
+    private void AddEntry()
+    {
+        AddPortfolioAsset(new AssetDefinition("Asset Name", AssetCurrency.CAD, 1));
+        UpperCaseTexts();
+    }
+
+    private void RemoveEntry()
+    {
+        if (Assets.Count != 0)
+            RemovePortfolioAsset(Assets.Last());
+        UpperCaseTexts();
+    }
+    #endregion
+
+    #region Routines
+    private void AddPortfolioAsset(AssetDefinition newAsset)
+    {
+        Assets.Add(newAsset);
+        Factors.Add(newAsset);
+        
+        if (newAsset.Currency == AssetCurrency.USD)
+            Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
+
+        PortfolioBuilder.Config.Assets = Assets.Select(a => a.Symbol).ToList();
+        PortfolioBuilder.Config.Factors = Factors.Select(f => f.Symbol).ToList();
+        PortfolioBuilder.Config.Weights = Assets.Select(a => a.Weight).ToList();
+        PortfolioBuilder.Config.NormalizeWeights();
+    }
+    private void RemovePortfolioAsset(AssetDefinition oldAsset)
+    {
+        Assets.Remove(oldAsset);
+    }
+
+    private void UpperCaseTexts()
+    {
+        foreach (AssetDefinition assetDefinition in Assets)
+        {
+            if(assetDefinition.Symbol != null)
+                assetDefinition.Symbol = assetDefinition.Symbol.ToUpper();
+        }
+    }
+    #endregion
+
+    #region Helpers
+    private object GeneratePreviewLink(AssetDefinition definition)
+    {
+        if (string.IsNullOrEmpty(definition.Symbol)) return "#";
+
+        DateTime configStartDate = PortfolioBuilder.Config.StartDate!.Value;
+        DateTime configEndDate = PortfolioBuilder.Config.EndDate!.Value;
+        return $"https://ca.finance.yahoo.com/quote/{definition.Symbol}/history?period1={YahooFinanceHelper.ConvertTimeFormat(configStartDate)}&period2={YahooFinanceHelper.ConvertTimeFormat(configEndDate)}&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true";
+    }
+    #endregion
+
+    #region Not Used
     private void HandleValidSubmit()
     {
-        // Process the valid form
+    // Process the valid form
     }
+    #endregion
 }

@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using PortfolioRisk.Core.DataTypes;
 
 namespace ChartViewer
 {
@@ -17,14 +18,14 @@ namespace ChartViewer
         public App()
         {
         }
-        public App(ViewModel model)
+        public App(Report report)
         {
-            Model = model;
+            Report = report;
         }
         #endregion
 
         #region Data
-        public ViewModel Model { get; }
+        public Report Report { get; }
         #endregion
     }
 }

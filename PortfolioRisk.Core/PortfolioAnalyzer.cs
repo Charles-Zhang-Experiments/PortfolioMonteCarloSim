@@ -11,7 +11,7 @@ namespace PortfolioRisk.Core
     public class PortfolioAnalyzer
     {
         #region Interface Function
-        public void Run(AnalysisConfig config)
+        public Report Run(AnalysisConfig config)
         {
             // Normalize weights
             config.NormalizeWeights();
@@ -38,6 +38,8 @@ namespace PortfolioRisk.Core
             Reporter reporter = new Reporter(totalReturns, GetCurrentPrices(config, out DateTime date), date);
             Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
             reporter.AnnounceReport(config, report);
+
+            return report;
         }
         #endregion
 

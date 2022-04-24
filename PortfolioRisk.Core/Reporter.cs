@@ -39,17 +39,8 @@ namespace PortfolioRisk.Core
         public void AnnounceReport(AnalysisConfig config, Report report)
         {
             // Basic stats
-            // Current Price
-            Console.WriteLine($"Current Price ({report.PriceDate:yyyy-MM-dd}): {string.Join(", ", report.CurrentPrices.Select(cp => $"{cp.Key}: {cp.Value:N2}"))}");
-            // ETL
-            Console.WriteLine("ETL:");
-            foreach ((string symbol, double etl) in report.ETL) 
-                Console.WriteLine($" {symbol,5}:{(long)etl,15:N0}");
-            // Max ETL
-            Console.WriteLine("Max ETL:");
-            foreach ((string symbol, double maxEtl) in report.MaxETL)
-                Console.WriteLine($" {symbol,5}:{(long)maxEtl,15:N0}");
-            
+            Console.WriteLine(report.BuildSummaryText());
+
             // Path visualization
             config.AdvancedVisualProvider.ViewReport(report);
         }

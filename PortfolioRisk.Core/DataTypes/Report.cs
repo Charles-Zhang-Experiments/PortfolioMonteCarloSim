@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace PortfolioRisk.Core.DataTypes
 {
@@ -40,6 +42,30 @@ namespace PortfolioRisk.Core.DataTypes
         
         public Dictionary<string,double> CurrentPrices { get; set; }
         public DateTime PriceDate { get; set; }
+        #endregion
+
+        #region Accessor
+        public string BuildSummaryText(bool currentPriceLast = false)
+        {
+            StringBuilder builder = new StringBuilder();
+            if(!currentPriceLast)
+                builder.AppendLine(CurrentPrice());
+            // ETL
+            builder.AppendLine("ETL:");
+            foreach ((string symbol, double etl) in ETL) 
+                builder.AppendLine($" {symbol,5}:{(long)etl,15:N0}");
+            // Max ETL
+            builder.AppendLine("Max ETL:");
+            foreach ((string symbol, double maxEtl) in MaxETL)
+                builder.AppendLine($" {symbol,5}:{(long)maxEtl,15:N0}");
+            // Current Prices
+            if(currentPriceLast)
+                builder.AppendLine(CurrentPrice());
+
+            return builder.ToString().TrimEnd();
+            
+            string CurrentPrice() => $"Current Price ({PriceDate:yyyy-MM-dd}): {string.Join(", ", CurrentPrices.Select(cp => $"{cp.Key}: {cp.Value:N2}"))}";
+        }
         #endregion
     }
 }

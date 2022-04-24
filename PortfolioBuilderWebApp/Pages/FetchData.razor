@@ -1,58 +1,53 @@
 ﻿@page "/fetchdata"
-@inject HttpClient Http
+@using PortfolioRisk.Core
 
-<h1>Weather forecast</h1>
+<h1>Fetch Data</h1>
 
-<p>This component demonstrates fetching data from the server.</p>
+<button type="button" class="btn btn-primary" @onclick="FetchAndRun">Fetch</button>
 
-@if (forecasts == null)
+@if (PortfolioBuilder.PortfolioAnalyzer == null)
 {
-    <p>
-        <em>Loading...</em>
-    </p>
+    
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Date</th>
-            <th>Temp. (C)</th>
-            <th>Temp. (F)</th>
-            <th>Summary</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var forecast in forecasts)
-        {
-            <tr>
-                <td>@forecast.Date.ToShortDateString()</td>
-                <td>@forecast.TemperatureC</td>
-                <td>@forecast.TemperatureF</td>
-                <td>@forecast.Summary</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    
 }
 
+<p>@_errorMessage</p>
+
 @code {
-    private WeatherForecast[] forecasts;
 
-    protected override async Task OnInitializedAsync()
+    #region View Properties
+    private string _errorMessage;
+    #endregion
+
+    #region Methods
+    private void FetchAndRun()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        AnalysisConfig config = PortfolioBuilder.Config;
+        if (PortfolioBuilder.PortfolioAnalyzer != null) return;
+        
+        _errorMessage = string.Empty;
+        // Check for missing inputs parameters
+        if (config.ContainsMissingValue())
+        {
+            Console.WriteLine("Invalid command line format.");
+            return;
+        }
+        // Normalize weights
+        config.NormalizeWeights();
+            
+        try
+        {
+            PortfolioBuilder.PortfolioAnalyzer = new PortfolioAnalyzer();
+            PortfolioBuilder.Report = PortfolioBuilder.PortfolioAnalyzer.Run(PortfolioBuilder.Config);
+        }
+        catch (Exception e)
+        {
+            _errorMessage = "An error occured during analysis.\n";
+            _errorMessage += e.Message;
+        }
     }
-
-    public class WeatherForecast
-    {
-        public DateTime Date { get; set; }
-
-        public int TemperatureC { get; set; }
-
-        public string Summary { get; set; }
-
-        public int TemperatureF => 32 + (int) (TemperatureC / 0.5556);
-    }
-
+    #endregion
 }
