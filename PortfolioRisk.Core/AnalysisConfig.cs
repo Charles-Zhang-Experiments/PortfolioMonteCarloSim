@@ -13,6 +13,7 @@ namespace PortfolioRisk.Core
         public List<double> Weights { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public IAdvancedVisualProvider AdvancedVisualProvider { get; set; } = new EmptyVisualProvider(); // Provide an empty one to bypass automatic missing value check
 
         #region Helpers
         public bool ContainsMissingValue()

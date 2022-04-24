@@ -24,9 +24,4 @@
   <ItemGroup>
     <PackageReference Include="Csv" Version="2.0.80" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ChartViewer\ChartViewer.csproj" />
-  </ItemGroup>
-
 </Project>

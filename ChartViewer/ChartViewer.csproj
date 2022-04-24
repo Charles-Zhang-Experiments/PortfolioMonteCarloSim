@@ -10,4 +10,8 @@
       <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-beta.101" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
+    </ItemGroup>
+
 </Project>

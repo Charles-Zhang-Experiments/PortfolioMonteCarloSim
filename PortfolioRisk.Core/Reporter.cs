@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChartViewer;
 using PortfolioRisk.Core.Algorithm;
 using PortfolioRisk.Core.DataTypes;
 
@@ -17,13 +16,6 @@ namespace PortfolioRisk.Core
             CurrentPrices = currentPrices;
             PriceDate = priceDate;
         }
-        #endregion
-
-        #region Configuration
-        /// <summary>
-        /// Don't draw all 5000 because the UI can't handle it
-        /// </summary>
-        private const int VisualizationSampleSize = 10;
         #endregion
 
         #region Private Members
@@ -44,7 +36,7 @@ namespace PortfolioRisk.Core
 
             return report;
         }
-        public void AnnounceReport(Report report)
+        public void AnnounceReport(AnalysisConfig config, Report report)
         {
             // Basic stats
             // Current Price
@@ -59,15 +51,7 @@ namespace PortfolioRisk.Core
                 Console.WriteLine($" {symbol,5}:{(long)maxEtl,15:N0}");
             
             // Path visualization
-            App app = new App(new ViewModel()
-            {
-                Series = report.PortfolioReturn.ToDictionary(pr => pr.Asset, pr => pr.Values.Take(VisualizationSampleSize).ToArray()),
-                ETL = report.ETL,
-                MaxETL = report.MaxETL,
-                CurrentPrices = report.CurrentPrices,
-                PriceDate = report.PriceDate
-            });
-            app.Run(new MainWindow());
+            config.AdvancedVisualProvider.ViewReport(report);
         }
         #endregion
 

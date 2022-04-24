@@ -1,7 +1,23 @@
 ﻿@page "/"
+@using PortfolioRisk.Core
 
-<h1>Hello, world!</h1>
+<EditForm Model="@Config" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    
+    <h1 class="text-center">History Time Range</h1>
+    <p class="text-center"><InputDate @bind-Value="Config.StartDate" />-<InputDate @bind-Value="Config.EndDate" /></p>
 
-Welcome to your new app.
+    <InputNumber id="name" @bind-Value="Config.TotalAllocation" />
 
-<SurveyPrompt Title="How is Blazor working for you?"/>
+    <button type="submit">Submit</button>
+</EditForm>
+
+@code{
+    private AnalysisConfig Config = new();
+    
+    private void HandleValidSubmit()
+    {
+        // Process the valid form
+    }
+}
