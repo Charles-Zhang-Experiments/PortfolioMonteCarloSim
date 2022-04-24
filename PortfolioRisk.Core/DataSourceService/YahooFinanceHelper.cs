@@ -55,9 +55,11 @@ namespace PortfolioRisk.Core.DataSourceService
             GetHistorical(parameters);
             return parameters.OutputTable;
         }
-        public AssetCurrency GetSymbolCurrency(string symbol)
+        public AssetCurrency GetSymbolCurrency(AnalysisConfig config, string symbol)
         {
-            throw new NotImplementedException();
+            if (config.CurrencyMapping.ContainsKey(symbol))
+                return config.CurrencyMapping[symbol];
+            throw new ArgumentException("Undefined symbol.");
         }
         #endregion
 

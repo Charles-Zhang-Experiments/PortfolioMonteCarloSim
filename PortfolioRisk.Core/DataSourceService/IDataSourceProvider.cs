@@ -15,6 +15,6 @@ namespace PortfolioRisk.Core.DataSourceService
         /// <summary>
         /// Given a symbol, indicate which currency the numbers in its historical data is
         /// </summary>
-        public AssetCurrency GetSymbolCurrency(string symbol);
+        public AssetCurrency GetSymbolCurrency(AnalysisConfig config, string symbol);
     }
 }

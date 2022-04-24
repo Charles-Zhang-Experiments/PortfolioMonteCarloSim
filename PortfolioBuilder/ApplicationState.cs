@@ -26,13 +26,45 @@ namespace PortfolioBuilder
         #endregion
 
         #region Routines
+        public static void AddPortfolioAsset(AssetDefinition newAsset)
+        {
+            Assets.Add(newAsset);
+            RefreshConfig();
+
+            PortfolioAnalyzer = null;
+            Report = null;
+        }
+        public static void RemovePortfolioAsset(AssetDefinition oldAsset)
+        {
+            Assets.Remove(oldAsset);
+            RefreshConfig();
+            
+            PortfolioAnalyzer = null;
+            Report = null;
+        }
         public static void RefreshConfig()
         {
-            ApplicationState.Config.Assets = ApplicationState.Assets.Select(a => a.Symbol).ToList();
-            ApplicationState.Config.Factors = ApplicationState.Factors.Select(f => f.Symbol).ToList();
-            ApplicationState.Config.Weights = ApplicationState.Assets.Select(a => a.Weight).ToList();
-            ApplicationState.Config.NormalizeWeights();
+            PopulateFactors();
+            
+            Config.Assets = Assets.Select(a => a.Symbol).ToList();
+            Config.AssetCurrencies = Assets.Select(a => a.Currency).ToList();
+            Config.Factors = Factors.Select(f => f.Symbol).ToList();
+            Config.Weights = Assets.Select(a => a.Weight).ToList();
+            Config.NormalizeWeights();
         }
+
+        private static void PopulateFactors()
+        {
+            Factors.Clear();
+            foreach (AssetDefinition asset in Assets)
+            {
+                Factors.Add(asset);
+                
+                if (asset.Currency == AssetCurrency.USD && Factors.All(f => f.Currency != AssetCurrency.USD_TO_CAD))
+                    Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
+            }
+        }
+
         #endregion
     }
 }

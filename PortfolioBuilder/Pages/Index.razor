@@ -29,13 +29,13 @@
                         <option value="USD">USD</option>
                     </InputSelect>
                     <InputNumber @bind-Value="definition.Weight"/>
-                    <a href="@GeneratePreviewLink(definition)" class="link-primary" target="_blank" rel="noopener noreferrer" @onclick="UpperCaseTexts">Preview</a>
+                    <a href="@GeneratePreviewLink(definition)" class="btn btn-warning" target="_blank" rel="noopener noreferrer" @onclick="UpperTextsCases">Preview</a>
+                    <button type="button" class="btn btn-danger" @onclick="() => RemoveEntry(definition)">Remove</button>
                 </p>
             }
 
             <button type="button" class="btn btn-primary" @onclick="AddEntry">Add</button>
-            <button type="button" class="btn btn-danger" @onclick="RemoveEntry">Remove</button>
-            
+
             <p>When you are done, go to <NavLink class="link-dark" href="fetchdata">
                                                         <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
                                                     </NavLink>.</p>
@@ -55,43 +55,30 @@
     #region Events
     protected override void OnInitialized()
     {
-        ApplicationState.Assets = new HashSet<AssetDefinition>();
-        ApplicationState.Factors = new HashSet<AssetDefinition>();
+        if (ApplicationState.Assets == null || ApplicationState.Assets.Count == 0)
+        {
+            ApplicationState.Assets = new HashSet<AssetDefinition>();
+            ApplicationState.Factors = new HashSet<AssetDefinition>();
         
-        AddPortfolioAsset(new AssetDefinition("SPY", AssetCurrency.USD, 1));
-        AddPortfolioAsset(new AssetDefinition("XIU", AssetCurrency.CAD, 1));
+            ApplicationState.AddPortfolioAsset(new AssetDefinition("SPY", AssetCurrency.USD, 1));
+            ApplicationState.AddPortfolioAsset(new AssetDefinition("XIU", AssetCurrency.CAD, 1));
+        }
     }
     private void AddEntry()
     {
-        AddPortfolioAsset(new AssetDefinition("Asset Name", AssetCurrency.CAD, 1));
-        UpperCaseTexts();
+        ApplicationState.AddPortfolioAsset(new AssetDefinition("Asset Name", AssetCurrency.CAD, 1));
+        UpperTextsCases();
     }
 
-    private void RemoveEntry()
+    private void RemoveEntry(AssetDefinition assetDefinition)
     {
-        if (ApplicationState.Assets.Count != 0)
-            RemovePortfolioAsset(ApplicationState.Assets.Last());
-        UpperCaseTexts();
+        ApplicationState.RemovePortfolioAsset(assetDefinition);
+        UpperTextsCases();
     }
     #endregion
 
     #region Routines
-    private void AddPortfolioAsset(AssetDefinition newAsset)
-    {
-        ApplicationState.Assets.Add(newAsset);
-        ApplicationState.Factors.Add(newAsset);
-        
-        if (newAsset.Currency == AssetCurrency.USD)
-            ApplicationState.Factors.Add(new AssetDefinition("USD/CAD", AssetCurrency.USD_TO_CAD, 0));
-
-        ApplicationState.RefreshConfig();
-    }
-    private void RemovePortfolioAsset(AssetDefinition oldAsset)
-    {
-        ApplicationState.Assets.Remove(oldAsset);
-    }
-
-    private void UpperCaseTexts()
+    private void UpperTextsCases()
     {
         foreach (AssetDefinition assetDefinition in ApplicationState.Assets)
         {

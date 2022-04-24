@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ChartViewer;
 using PortfolioRisk.Core.DataSourceService;
+using PortfolioRisk.Core.DataTypes;
 
 namespace RiskTerminal
 {
@@ -13,6 +14,7 @@ namespace RiskTerminal
         TotalAllocation,
         Factors,
         Assets,
+        AssetCurrencies,
         Weights,
         StartDate,
         EndDate
@@ -58,6 +60,10 @@ namespace RiskTerminal
                             parseMode = ArgumentParseMode.Assets;
                             parameters.Assets = new List<string>();
                             break;
+                        case "-c":
+                            parseMode = ArgumentParseMode.AssetCurrencies;
+                            parameters.AssetCurrencies = new List<AssetCurrency>();
+                            break;
                         case "-w":
                             parseMode = ArgumentParseMode.Weights;
                             parameters.Weights = new List<double>();
@@ -84,6 +90,9 @@ namespace RiskTerminal
                                     break;
                                 case ArgumentParseMode.Assets:
                                     parameters.Assets.Add(arg.ToUpper());
+                                    break;
+                                case ArgumentParseMode.AssetCurrencies:
+                                    parameters.AssetCurrencies.Add(Enum.Parse<AssetCurrency>(arg.ToUpper()));
                                     break;
                                 case ArgumentParseMode.Factors:
                                     parameters.Factors.Add(arg.ToUpper());
@@ -116,6 +125,7 @@ namespace RiskTerminal
                 Weights = new List<double> { 1, 1 },
                 TotalAllocation = 2000000000,   // In CAD
                 Assets = new List<string> { "SPY", "XIU" },
+                AssetCurrencies = new List<AssetCurrency>{ AssetCurrency.USD, AssetCurrency.CAD },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
                 StartDate = new DateTime(2017, 1, 1),
                 EndDate = new DateTime(2021, 12, 31),

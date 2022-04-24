@@ -84,6 +84,7 @@ else
         try
         {
             ApplicationState.PortfolioAnalyzer.Stage2();
+            PopulateScenarios(_chartConfig, ApplicationState.PortfolioAnalyzer.TotalReturns);
         }
         catch (Exception e)
         {

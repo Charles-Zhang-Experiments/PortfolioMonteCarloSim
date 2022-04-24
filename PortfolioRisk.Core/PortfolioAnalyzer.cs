@@ -169,7 +169,7 @@ namespace PortfolioRisk.Core
         
         private Dictionary<string, AssetCurrency> AnnotateAssetCurrency(AnalysisConfig config)
         {
-            return config.Assets.Union(config.Factors).ToDictionary(s => s, GetCurrency);
+            return config.Assets.Union(config.Factors).ToDictionary(s => s, s => GetCurrency(config, s));
         }
         #endregion
 
@@ -206,9 +206,9 @@ namespace PortfolioRisk.Core
             return column[^1];
         }
 
-        private AssetCurrency GetCurrency(string symbol)
+        private AssetCurrency GetCurrency(AnalysisConfig config, string symbol)
         {
-            return GetHandling(symbol).GetSymbolCurrency(symbol);
+            return GetHandling(symbol).GetSymbolCurrency(config, symbol);
         }
 
         /// <summary>
