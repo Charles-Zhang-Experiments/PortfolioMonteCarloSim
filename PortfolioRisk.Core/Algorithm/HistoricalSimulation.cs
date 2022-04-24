@@ -37,49 +37,71 @@ namespace PortfolioRisk.Core.Algorithm
         #endregion
 
         #region Interface Method
+        /// <summary>
+        /// Simulate and generate returns for all assets in one scenario;
+        /// The outcome numbers at each array element is the total return from the start date at index 0
+        /// </summary>
         public Dictionary<string, double[]> SimulateOnce()
         {
+            #region Simulation Logic
             // Randomly pick 4 quarters of historical data
-            DateTime rangeStartDate = MinDate;
-            DateTime rangeEndDate = ReturnData.First().Value
-                [Array.FindIndex(ReturnData.First().Value, d => d.Date == MaxDate) - QuarterReturnDays]
-                .Date;  // Pick it so that when we take a quarter from this date, we have sufficient amount of data
-            DateTime[] startDates = Enumerable.Range(0, 4)
-                .Select(_ => PickRandomDate(rangeStartDate, rangeEndDate))
-                .ToArray();
-            // Select return time series and stitch
-            Dictionary<string, TimeSeries[]> stitchReturns = 
-                ReturnData.ToDictionary(rd => rd.Key, rd => 
-                    startDates
-                        .SelectMany(
-                            sd => 
-                                rd.Value
-                                    .Skip(Array.FindIndex(rd.Value, ts => ts.Date == sd))
-                                    .Take(QuarterReturnDays))
-                        .ToArray());
+            DateTime[] startDates = PickQuarterStartDates();
             
-            // Validation Assertion
+            // Select return series and stitch
+            Dictionary<string, TimeSeries[]> stitchReturns = StitchReturns();
+            
+            // Validation Assert
             if (stitchReturns.Any(sr => sr.Value.Length != YearReturnDays))
                 throw new InvalidOperationException("Unexpected stitching result.");
 
             // Simulate price (accumulated return) path
-            Dictionary<string, double[]> simulatedPaths = stitchReturns.ToDictionary(sr => sr.Key, sr =>
-            {                
-                List<double> path = new List<double>() { sr.Value.First().Value };
-                sr.Value.Skip(1).Aggregate(sr.Value.First().Value,
-                    (agg, ts) =>
-                    {
-                        var accu = agg * ts.Value;
-                        path.Add(accu);
-                        return accu;
-                    });
+            return SimulatePaths();
+            #endregion
 
-                if (path.Count != YearReturnDays)
-                    throw new InvalidOperationException("Unexpected path length.");
-                return path.ToArray();
-            });
+            #region Local Functions
+            DateTime[] PickQuarterStartDates()
+            {
+                DateTime rangeStartDate = MinDate;
+                DateTime rangeEndDate = ReturnData.First().Value
+                        [Array.FindIndex(ReturnData.First().Value, d => d.Date == MaxDate) - QuarterReturnDays]
+                    .Date; // Pick it so that when we take a quarter from this date, we have sufficient amount of data
+                return startDates = Enumerable.Range(0, 4)
+                    .Select(_ => PickRandomDate(rangeStartDate, rangeEndDate))
+                    .ToArray();
+            }
 
-            return simulatedPaths;
+            Dictionary<string, TimeSeries[]> StitchReturns()
+            {
+                return
+                    ReturnData.ToDictionary(rd => rd.Key, rd =>
+                        startDates
+                            .SelectMany(
+                                sd =>
+                                    rd.Value
+                                        .Skip(Array.FindIndex(rd.Value, ts => ts.Date == sd))
+                                        .Take(QuarterReturnDays))
+                            .ToArray());
+            }
+
+            Dictionary<string, double[]> SimulatePaths()
+            {
+                return stitchReturns.ToDictionary(sr => sr.Key, sr =>
+                {
+                    List<double> path = new List<double>() {sr.Value.First().Value};
+                    sr.Value.Skip(1).Aggregate(sr.Value.First().Value,
+                        (agg, ts) =>
+                        {
+                            double accu = agg * ts.Value; // Apply all returns until a given day
+                            path.Add(accu);
+                            return accu;
+                        });
+
+                    if (path.Count != YearReturnDays)
+                        throw new InvalidOperationException("Unexpected path length.");
+                    return path.ToArray();
+                });
+            }
+            #endregion
         }
         #endregion
 

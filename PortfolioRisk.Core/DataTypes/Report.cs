@@ -15,9 +15,10 @@ namespace PortfolioRisk.Core.DataTypes
     public class Report
     {
         #region Constructor
-        public Report(Dictionary<string,double> currentPrices)
+        public Report(Dictionary<string, double> currentPrices, DateTime priceDate)
         {
             CurrentPrices = currentPrices;
+            PriceDate = priceDate;
         }
         #endregion
 
@@ -38,6 +39,7 @@ namespace PortfolioRisk.Core.DataTypes
         public Dictionary<string, double> MaxETL { get; set; }
         
         public Dictionary<string,double> CurrentPrices { get; set; }
+        public DateTime PriceDate { get; set; }
         #endregion
     }
 }

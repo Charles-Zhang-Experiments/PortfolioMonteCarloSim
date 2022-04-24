@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ChartViewer
 {
@@ -21,7 +22,7 @@ namespace ChartViewer
         public Dictionary<string, double> ETL { get; set; }
         public Dictionary<string, double> MaxETL { get; set; }
         public Dictionary<string,double> CurrentPrices { get; set; }
-
+        public DateTime PriceDate { get; set; }
         #endregion
     }
 }

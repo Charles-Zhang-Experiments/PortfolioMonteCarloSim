@@ -117,7 +117,7 @@ namespace RiskTerminal
                 TotalAllocation = 2000000000,   // In CAD
                 Assets = new List<string> { "SPY", "XIU" },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
-                StartDate = new DateTime(2016, 12, 31),
+                StartDate = new DateTime(2017, 1, 1),
                 EndDate = new DateTime(2021, 12, 31)
             });
         }
@@ -125,11 +125,13 @@ namespace RiskTerminal
         static void Run(AnalysisConfig config)
         {
             // Check for missing inputs parameters
-             if (config.ContainsMissingValue())
+            if (config.ContainsMissingValue())
             {
                 Console.WriteLine("Invalid command line format.");
                 return;
             }
+            // Normalize weights
+            config.NormalizeWeights();
 
             try
             {

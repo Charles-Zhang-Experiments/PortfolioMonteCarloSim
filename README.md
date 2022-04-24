@@ -81,3 +81,12 @@ Since both the offline data and Yahoo Finance API data can have missing dates, o
 ## Methodology
 
 1. Data needs clean up, some are filled for missing data.
+
+## Analysis
+
+Factors: 
+
+* XIU
+* SPY (USD)
+* USD/CAD
+* SPY (USD) + USD/CAD

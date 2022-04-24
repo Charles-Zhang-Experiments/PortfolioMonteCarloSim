@@ -18,7 +18,7 @@
                           SelectionChanged="Selector_OnSelectionChanged"/>
             </DockPanel>
             
-            <Label DockPanel.Dock="Top" Content="Scenarios (Samples Preview): "></Label>
+            <Label DockPanel.Dock="Top" Content="Scenarios (Preview of 10 Scenarios): "></Label>
             <TextBlock DockPanel.Dock="Bottom" Text="{Binding SummaryText}"></TextBlock>
             <lvc:CartesianChart Series="{Binding Series}"/>
         </DockPanel>

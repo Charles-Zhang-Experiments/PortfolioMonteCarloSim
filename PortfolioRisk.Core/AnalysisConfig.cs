@@ -24,6 +24,11 @@ namespace PortfolioRisk.Core
                 .Select(p => p.GetValue(this) ?? null)
                 .Any(v => v == null);
         }
+        public void NormalizeWeights()
+        {
+            double total = Weights.Sum();
+            Weights = Weights.Select(w => w / total).ToList();
+        }
         #endregion
     }
 }

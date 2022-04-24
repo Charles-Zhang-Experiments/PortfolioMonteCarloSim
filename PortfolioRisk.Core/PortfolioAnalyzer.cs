@@ -13,6 +13,9 @@ namespace PortfolioRisk.Core
         #region Interface Function
         public void Run(AnalysisConfig config)
         {
+            // Normalize weights
+            config.NormalizeWeights();
+
             // Fetch time series data
             Dictionary<string, DataGrid> originalTimeSeries = PopulateTimeSeries(config);
 
@@ -23,16 +26,16 @@ namespace PortfolioRisk.Core
 
             // Perform the actual simulation and analysis
             HistoricalSimulation simulator = new HistoricalSimulation(timeSeries);
-            List<Dictionary<string, double[]>> results = Enumerable.Range(0, SimulationIterations)
-                /*.AsParallel()*/.Select(_ => simulator.SimulateOnce()).ToList();
+            List<Dictionary<string, double[]>> totalReturns = Enumerable.Range(0, SimulationIterations)
+                .AsParallel().Select(_ => simulator.SimulateOnce()).ToList();
             
-            // Validation Asserts
-            if (results.Count() != SimulationIterations ||
-                results.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
+            // Validation Assert
+            if (totalReturns.Count() != SimulationIterations ||
+                totalReturns.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
                 throw new InvalidOperationException("Unexpected simulation outcome.");
             
             // Reporting
-            Reporter reporter = new Reporter(results, GetCurrentPrices(config));
+            Reporter reporter = new Reporter(totalReturns, GetCurrentPrices(config, out DateTime date), date);
             Report report = reporter.BuildReport(config, AnnotateAssetCurrency(config));
             reporter.AnnounceReport(report);
         }
@@ -62,10 +65,12 @@ namespace PortfolioRisk.Core
 
             return timeSeries;
         }
-        private Dictionary<string, double> GetCurrentPrices(AnalysisConfig config)
+        private static Dictionary<string, double> GetCurrentPrices(AnalysisConfig config, out DateTime date)
         {
+            DateTime priceDate = DateTime.Today;
             Dictionary<string, double> currentPrices =
-                config.Assets.Union(config.Factors).ToDictionary(s => s, GetCurrentPrice);
+                config.Assets.Union(config.Factors).ToDictionary(s => s, s => GetCurrentPrice(s, out priceDate));
+            date = priceDate;
             return currentPrices;
         }
         private Dictionary<string, List<TimeSeries>> CleanupData(Dictionary<string, DataGrid> originalTimeSeries)
@@ -159,7 +164,7 @@ namespace PortfolioRisk.Core
             return provider.GetSymbol(symbol);
         }
         
-        private double GetCurrentPrice(string symbol)
+        private static double GetCurrentPrice(string symbol, out DateTime date)
         {
             SymbolDefinition query = new SymbolDefinition()
             {
@@ -172,6 +177,7 @@ namespace PortfolioRisk.Core
             // Get the latest
             table.Sort(table.Columns.First().Header, false);
             DataColumn column = table.Columns[AdjustedCloseColumnIndex];
+            date = table.Columns[0][^1];
             return column[^1];
         }
 
@@ -222,7 +228,7 @@ namespace PortfolioRisk.Core
             return false;
         }
 
-        private IDataSourceProvider GetHandling(string symbol)
+        private static IDataSourceProvider GetHandling(string symbol)
         {
             // Offline sources
             if (OfflineSourceHelper.OfflineSources.Contains(symbol))
