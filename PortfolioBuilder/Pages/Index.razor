@@ -13,7 +13,7 @@
     <p class="text-center"><InputDate @bind-Value="ApplicationState.Config.StartDate" />-<InputDate @bind-Value="ApplicationState.Config.EndDate" /></p>
 
     <div class="row">
-        <div class="col-8">
+        <div class="col-sm-8">
             <p>Enter the constituents of your portfolio below; 
                 Make sure the currency matches the return value as indicated from <a href="https://ca.finance.yahoo.com/">Yahoo Finance</a>.</p>
             <p>Total Allocation (in CAD): <InputNumber @bind-Value="ApplicationState.Config.TotalAllocation"/></p>
@@ -40,7 +40,7 @@
                                                         <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
                                                     </NavLink>.</p>
         </div>
-        <div class="col-4">
+        <div class="col-sm-4">
             <h3>Factors</h3>
             <p></p>
             @foreach (AssetDefinition definition in ApplicationState.Factors)
@@ -91,10 +91,12 @@
     #region Helpers
     private object GeneratePreviewLink(AssetDefinition definition)
     {
-        if (string.IsNullOrEmpty(definition.Symbol)) return "#";
+        if (string.IsNullOrEmpty(definition.Symbol)
+        || ApplicationState.Config.StartDate == null 
+        || ApplicationState.Config.EndDate == null) return "#";
 
-        DateTime configStartDate = ApplicationState.Config.StartDate!.Value;
-        DateTime configEndDate = ApplicationState.Config.EndDate!.Value;
+        DateTime configStartDate = ApplicationState.Config.StartDate.Value;
+        DateTime configEndDate = ApplicationState.Config.EndDate.Value;
         return $"https://ca.finance.yahoo.com/quote/{definition.Symbol}/history?period1={YahooFinanceHelper.ConvertTimeFormat(configStartDate)}&period2={YahooFinanceHelper.ConvertTimeFormat(configEndDate)}&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true";
     }
     #endregion

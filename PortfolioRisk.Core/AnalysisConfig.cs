@@ -23,10 +23,14 @@ namespace PortfolioRisk.Core
         #endregion
 
         #region Helpers
-        public bool ContainsMissingValue()
+        public bool ContainsMissingValue(out IEnumerable<string> missingAttributes)
         {
             // Automatically get all defined and thus required parameters for the configuration
             // and check whether any property is missing proper values
+            missingAttributes = GetType()
+                .GetProperties()
+                .Where(p => (p.GetValue(this) ?? null) == null)
+                .Select(p => p.Name);
             return GetType()
                 .GetProperties() 
                 .Select(p => p.GetValue(this) ?? null)

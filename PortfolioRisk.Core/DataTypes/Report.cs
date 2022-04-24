@@ -41,6 +41,10 @@ namespace PortfolioRisk.Core.DataTypes
         public Dictionary<string, double> MaxETL { get; set; }
         
         public Dictionary<string,double> CurrentPrices { get; set; }
+        /// <summary>
+        /// Original size of investment as allocated by weight
+        /// </summary>
+        public Dictionary<string, double> InvestmentSize { get; set; }
         public DateTime PriceDate { get; set; }
         #endregion
 
@@ -51,13 +55,15 @@ namespace PortfolioRisk.Core.DataTypes
             if(!currentPriceLast)
                 builder.AppendLine(CurrentPrice());
             // ETL
-            builder.AppendLine("ETL:");
+            builder.AppendLine($"ETL:");
             foreach ((string symbol, double etl) in ETL) 
-                builder.AppendLine($" {symbol,5}:{(long)etl,15:N0}");
+                builder.AppendLine($" {symbol,5}:{(long)etl,15:N0} (Risk Exposure: {-(InvestmentSize[symbol] - etl),12:N0})");
+            builder.AppendLine($" Total: {ETL.Sum(e => e.Value):N0}");
             // Max ETL
-            builder.AppendLine("Max ETL:");
+            builder.AppendLine($"Max ETL:");
             foreach ((string symbol, double maxEtl) in MaxETL)
-                builder.AppendLine($" {symbol,5}:{(long)maxEtl,15:N0}");
+                builder.AppendLine($" {symbol,5}:{(long)maxEtl,15:N0} (Risk Exposure: {-(InvestmentSize[symbol] - maxEtl),12:N0})");
+            builder.AppendLine($" Total: {MaxETL.Sum(e => e.Value):N0}");
             // Current Prices
             if(currentPriceLast)
                 builder.AppendLine(CurrentPrice());

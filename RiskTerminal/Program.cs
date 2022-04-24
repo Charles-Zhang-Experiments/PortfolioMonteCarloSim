@@ -136,7 +136,7 @@ namespace RiskTerminal
         static void Run(AnalysisConfig config)
         {
             // Check for missing inputs parameters
-            if (config.ContainsMissingValue())
+            if (config.ContainsMissingValue(out _))
             {
                 Console.WriteLine("Invalid command line format.");
                 return;

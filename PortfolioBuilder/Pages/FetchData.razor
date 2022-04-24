@@ -78,9 +78,10 @@ else
         
         _errorMessage = string.Empty;
         // Check for missing inputs parameters
-        if (config.ContainsMissingValue())
+        if (config.ContainsMissingValue(out IEnumerable<string> attributes))
         {
-            Console.WriteLine("Invalid command line format.");
+            _errorMessage = $"Portfolio contains missing information: {string.Join(", ", attributes)}.";
+            Console.WriteLine(_errorMessage);
             return;
         }
         // Normalize weights

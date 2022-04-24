@@ -31,6 +31,7 @@ namespace PortfolioRisk.Core
             Report report = new Report(CurrentPrices, PriceDate);
             
             NormalizeCurrencyForPnL(config, annotateAssetCurrency, report);
+            ComputeOriginalInvestmentSize(config, report);
             ComputeETL(config, report);
             ComputeMaxETL(config, report);
 
@@ -47,12 +48,18 @@ namespace PortfolioRisk.Core
         #endregion
 
         #region Routines
+        private static void ComputeOriginalInvestmentSize(AnalysisConfig config, Report report)
+        {
+            report.InvestmentSize = report.PortfolioReturn.ToDictionary(
+                pnl => pnl.Asset,
+                pnl => config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
+        }
         private void ComputeETL(AnalysisConfig config, Report report)
         {
             report.ETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
                 pnl.Values.Select(pv => pv.Last()).OrderBy(d => d)
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
-                    .Average() / CurrentPrices[pnl.Asset] * config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
+                    .Average() / CurrentPrices[pnl.Asset] * report.InvestmentSize[pnl.Asset]);
         }
         private void ComputeMaxETL(AnalysisConfig config, Report report)
         {
@@ -78,7 +85,7 @@ namespace PortfolioRisk.Core
                         double[][] exchangeRate = SimulationResults.Select(sr => sr[converter]).ToArray();
 
                         // Convert to CAD
-                        pnl = ElementWiseMultiply(pnl, exchangeRate, CurrentPrices[converter] * CurrentPrices[asset]);
+                        pnl = ElementWiseMultiply(pnl, exchangeRate, CurrentPrices[asset] / CurrentPrices[converter]);
                         break;
                     }
                     case AssetCurrency.CAD:

@@ -98,11 +98,13 @@ For a *$CAD2B* portfolio with **SPY** and **XIU** weighted *1:1* invested on **2
 
 ```
 ETL:
-   SPY:  1,211,746,006
-   XIU:    849,664,103
+   SPY:    756,870,318 (Risk Exposure: -243,129,681)
+   XIU:    865,833,837 (Risk Exposure: -134,166,162)
+ Total: 1,622,704,157
 Max ETL:
-   SPY:    966,778,569
-   XIU:    670,735,737
+   SPY:    606,759,085 (Risk Exposure: -393,240,915)
+   XIU:    682,617,963 (Risk Exposure: -317,382,036)
+ Total: 1,289,377,049
 Current Price (2022-04-24): SPY: 426.04, XIU: 32.48, USD/CAD: 1.27
 ```
 
@@ -115,7 +117,7 @@ Graphically speaking (though this screenshot contains only the first 10 scenario
 ![XIU](./Example/Example-XIU.png)
 
 
-Another way is to consider the factors - for a total final simulated portfolio value of *2,061,410,109*, *1,211,746,006* comes from SPY and *849,664,103* comes from XIU. Out of this, since SPY is originally rated in USD, we should also be able to get its risk value in USD and get the USD/CAD exchange rate risk.
+Another way is to consider the factors - for a total final simulated portfolio value of *1,622,704,157*, *756,870,318* comes from SPY and *865,833,837* comes from XIU. Out of this, since SPY is originally rated in USD, we should also be able to get its risk value in USD and get the USD/CAD exchange rate risk.
 
 <!--
 * XIU
