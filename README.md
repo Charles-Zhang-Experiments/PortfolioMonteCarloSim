@@ -35,7 +35,7 @@ For compiling and run:
 
 For standalone use:
 
-* Download and unzip [latest build for windows](https://github.com/chaojian-zhang/OTPPInterview2022/releases/tag/v1.0);
+* Download and unzip [latest build for windows](https://github.com/chaojian-zhang/OTPPInterview2022/releases/tag/v1.1);
 * Execute either **Desktop/RiskTerminal.exe** or **Server/PortfolioBuilder.exe**;
 * For command line parameters, see section on *Risk Terminal* below.
 
