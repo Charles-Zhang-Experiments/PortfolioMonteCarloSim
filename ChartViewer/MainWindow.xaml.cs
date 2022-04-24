@@ -66,15 +66,15 @@ namespace ChartViewer
             // ETL
             builder.AppendLine("ETL:");
             foreach ((string symbol, double etl) in viewModel.ETL) 
-                builder.AppendLine($"  {symbol}: {(long)etl}");
+                builder.AppendLine($" {symbol,5}:{(long)etl,15:N0}");
             // Max ETL
             builder.AppendLine("Max ETL:");
             foreach ((string symbol, double maxEtl) in viewModel.MaxETL)
-                builder.AppendLine($"  {symbol}: {(long)maxEtl}");
+                builder.AppendLine($" {symbol,5}:{(long)maxEtl,15:N0}");
             // Current Prices
             builder.AppendLine($"Current Price ({viewModel.PriceDate:yyyy-MM-dd}): {string.Join(", ", viewModel.CurrentPrices.Select(cp => $"{cp.Key}: {cp.Value:N2}"))}");
 
-            return builder.ToString();
+            return builder.ToString().TrimEnd();
         }
         #endregion
 

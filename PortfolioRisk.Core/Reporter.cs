@@ -52,11 +52,11 @@ namespace PortfolioRisk.Core
             // ETL
             Console.WriteLine("ETL:");
             foreach ((string symbol, double etl) in report.ETL) 
-                Console.WriteLine($"  {symbol}: {(long)etl}");
+                Console.WriteLine($" {symbol,5}:{(long)etl,15:N0}");
             // Max ETL
             Console.WriteLine("Max ETL:");
             foreach ((string symbol, double maxEtl) in report.MaxETL)
-                Console.WriteLine($"  {symbol}: {(long)maxEtl}");
+                Console.WriteLine($" {symbol,5}:{(long)maxEtl,15:N0}");
             
             // Path visualization
             App app = new App(new ViewModel()

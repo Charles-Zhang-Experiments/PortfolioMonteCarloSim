@@ -19,7 +19,8 @@
             </DockPanel>
             
             <Label DockPanel.Dock="Top" Content="Scenarios (Preview of 10 Scenarios): "></Label>
-            <TextBlock DockPanel.Dock="Bottom" Text="{Binding SummaryText}"></TextBlock>
+            <TextBox DockPanel.Dock="Bottom" Text="{Binding SummaryText, Mode=OneWay}"
+                     IsReadOnly="True" Background="Transparent" BorderThickness="0" TextWrapping="Wrap" ></TextBox>
             <lvc:CartesianChart Series="{Binding Series}"/>
         </DockPanel>
     </Grid>
