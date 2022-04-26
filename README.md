@@ -47,6 +47,8 @@ For quick online test:
 
 The risk analytics part of the program can be further improved; That is, for final risk numbers, we can generate contribution from exchange rate for easier analysis. (This is done in a later patch)
 
+There are also some known issues: https://github.com/chaojian-zhang/OTPPInterview2022/issues
+
 # Software Components
 
 The whole solution is written entirely in C# (with some JavaScript and HTML), and is divided into three parts: 
