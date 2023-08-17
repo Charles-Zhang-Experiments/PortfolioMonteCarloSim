@@ -38,9 +38,13 @@ For standalone use:
 
 ## Future Improvements
 
+- [x] (Done in [commit ada0d2d](https://github.com/Charles-Zhang-Experiments/PortfolioMonteCarloSim/commit/ada0d2d2accaf08e4c1cf43ad6ed83d1980f0372)) The current visualization for CLI program is not showing currency visualization, this would be helpful in understanding the trend; It can be added in future implementation. However, this is available in the website interface.
+
 The risk analytics part of the program can be further improved; That is, for final risk numbers, we can generate contribution from exchange rate for easier analysis. (This is done in a later patch)
 
 There are also some known issues carried from previous implementation: https://github.com/chaojian-zhang/OTPPInterview2022/issues
+
+Input parameters beyond sample data is not fully tested for Risk Terminal.
 
 ## Technical Notes
 
@@ -64,9 +68,7 @@ The *PortfolioRisk.Core/OfflineSources* folder contains some sample data, it's u
 Command format: `RiskTerminal -t <Total Allocation> -a <Assets> -c <Asset Currency Types> -w <Asset Weights> -f <Factors> -s <Start Date> -e <End Date>` 
 Example: `RiskTerminal -t 2,000,000 -a SPY XIU -c USD CAD -w 1 1 -f SPY XIU USD/CAD -s 2017-01-01 -e 2021-12-31`
 
-Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample data as in Question 1.
-
-Due to time constraint, input parameters beyond sample data is not fully tested.
+Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample some data as in the Example section below.
 
 # Example: Sample Portfolio
 
@@ -76,7 +78,6 @@ Methodology:
 
 1. Data needs clean up, some are back-filled for missing dates, the program also supports forward-fill by grabing from neighbouring future dates in case no historical data is available, though in practice this is not observed for our sample data;
 2. For "PnL" calculation, the program currently shows the final projected market value of the asset instead of its actual "loss";
-3. (Done in the newest update) ~~Due to time constraint, the current visualization for CLI program is not showing currency visualization, this would be helpful in understanding the trend; It can be added in future implementation.~~ However, this is available in the website interface.
 
 ## Analysis
 

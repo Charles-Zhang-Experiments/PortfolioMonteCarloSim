@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChartViewer;
-using PortfolioRisk.Core.DataSourceService;
 using PortfolioRisk.Core.DataTypes;
 
 namespace RiskTerminal
@@ -128,8 +126,7 @@ namespace RiskTerminal
                 AssetCurrencies = new List<AssetCurrency>{ AssetCurrency.USD, AssetCurrency.CAD },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
                 StartDate = new DateTime(2017, 1, 1),
-                EndDate = new DateTime(2021, 12, 31),
-                AdvancedVisualProvider = new VisualProvider()
+                EndDate = new DateTime(2021, 12, 31)
             });
         }
 

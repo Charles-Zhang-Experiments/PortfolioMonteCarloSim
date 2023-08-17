@@ -18,14 +18,6 @@ namespace ChartViewer
         public App()
         {
         }
-        public App(Report report)
-        {
-            Report = report;
-        }
-        #endregion
-
-        #region Data
-        public Report Report { get; }
         #endregion
     }
 }

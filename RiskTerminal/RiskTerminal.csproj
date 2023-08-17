@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <ApplicationIcon>Terminal.ico</ApplicationIcon>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0</TargetFramework>
+		<ApplicationIcon>Terminal.ico</ApplicationIcon>
+		<Nullable>disable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ChartViewer\ChartViewer.csproj" />
-    <ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
+	</ItemGroup>
 
 </Project>

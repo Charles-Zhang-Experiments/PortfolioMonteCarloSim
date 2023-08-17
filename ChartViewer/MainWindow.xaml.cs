@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using LiveChartsCore.SkiaSharpView;
@@ -23,7 +22,6 @@ namespace ChartViewer
 
             InitializeComponent();
         }
-        private Report Report => (Application.Current as App)!.Report;
         private Dictionary<string, double[][]> _reportSeries;
         #endregion
         
@@ -37,6 +35,8 @@ namespace ChartViewer
         #region Routine
         private void InitializeViewData()
         {
+            Report Report = /*TODO: Get report somewhere*/ null;
+
             // Add display for assets
             _reportSeries = Report.PortfolioReturn.ToDictionary(pr => pr.Asset,
                 pr => pr.Values.Take(VisualizationSampleSize).ToArray());

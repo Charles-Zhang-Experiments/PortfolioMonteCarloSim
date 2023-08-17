@@ -37,13 +37,10 @@ namespace PortfolioRisk.Core
 
             return report;
         }
-        public void AnnounceReport(AnalysisConfig config, Report report)
+        public string AnnounceReport(AnalysisConfig config, Report report)
         {
             // Basic stats
-            Console.WriteLine(report.BuildSummaryText());
-
-            // Path visualization
-            config.AdvancedVisualProvider.ViewReport(report);
+            return report.BuildSummaryText();
         }
         #endregion
 
