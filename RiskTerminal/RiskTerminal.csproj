@@ -8,6 +8,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="README.md" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="README.md" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
 	</ItemGroup>
 

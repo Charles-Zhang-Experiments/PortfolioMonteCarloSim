@@ -6,21 +6,21 @@ using PortfolioRisk.Core.DataTypes;
 
 namespace RiskTerminal
 {
-    internal enum ArgumentParseMode
-    {
-        _Undetermined,
-        TotalAllocation,
-        Factors,
-        Assets,
-        AssetCurrencies,
-        Weights,
-        StartDate,
-        EndDate
-    }
-
     class Program
     {
-        [STAThread]
+        private enum ArgumentParseMode
+        {
+            _Undetermined,
+            TotalAllocation,
+            Factors,
+            Assets,
+            AssetCurrencies,
+            Weights,
+            StartDate,
+            EndDate
+        }
+
+        #region Entrance
         static void Main(string[] args)
         {
             // Wrap parsing commands with a try-catch to automatically handle some edge-cases of erroneous input formats
@@ -37,13 +37,13 @@ namespace RiskTerminal
 
         static void ParseCommandsAndRun(string[] args)
         {
-            // Run sample for Question 1
-            if (args.Length == 0 || args.First().ToLower() == "sample")
+            if (args.Length == 0)
+                PrintHelp();
+            else if (args.First().ToLower() == "sample")
                 RunSample();
-            // Parse input parameters
             else
             {
-                AnalysisConfig parameters = new AnalysisConfig();
+                AnalysisConfig parameters = new();
 
                 ArgumentParseMode parseMode = ArgumentParseMode._Undetermined;
                 // Enumerate and parse the arguments using a state machine
@@ -83,7 +83,7 @@ namespace RiskTerminal
                                 case ArgumentParseMode._Undetermined:
                                     goto EndOfParsing;
                                 case ArgumentParseMode.TotalAllocation:
-                                    if(double.TryParse(arg.Replace(",", string.Empty), out double result))
+                                    if (double.TryParse(arg.Replace(",", string.Empty), out double result))
                                         parameters.TotalAllocation = result;
                                     break;
                                 case ArgumentParseMode.Assets:
@@ -109,12 +109,12 @@ namespace RiskTerminal
                     }
                 }
 
-                EndOfParsing: Run(parameters);
+            EndOfParsing: Run(parameters);
             }
         }
+        #endregion
 
         #region Routines
-
         static void RunSample()
         {
             Console.WriteLine("Run sample data sets.");
@@ -150,6 +150,13 @@ namespace RiskTerminal
                 Console.WriteLine($"An error occured during analysis.");
                 Console.WriteLine(e.Message);
             }
+        }
+        #endregion
+
+        #region Helpers
+        private static void PrintHelp()
+        {
+            Console.WriteLine(EmbeddedResourceHelper.ReadResource($"{nameof(RiskTerminal)}.README.md"));
         }
         #endregion
     }

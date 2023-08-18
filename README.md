@@ -65,10 +65,9 @@ The *PortfolioRisk.Core/OfflineSources* folder contains some sample data, it's u
 
 ## Risk Terminal Command Line (CLI) Use
 
-Command format: `RiskTerminal -t <Total Allocation> -a <Assets> -c <Asset Currency Types> -w <Asset Weights> -f <Factors> -s <Start Date> -e <End Date>` 
-Example: `RiskTerminal -t 2,000,000 -a SPY XIU -c USD CAD -w 1 1 -f SPY XIU USD/CAD -s 2017-01-01 -e 2021-12-31`
+See [RiskTerminal README](RiskTerminal\README.md).
 
-Use command `RiskTerminal sample` or simply run `RiskTerminal` without any command-line arguments to run the sample some data as in the Example section below.
+Run with `sample` to simulate with the sample data as in the Example section below.
 
 # Example: Sample Portfolio
 

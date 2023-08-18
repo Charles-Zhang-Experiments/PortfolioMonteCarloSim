@@ -85,7 +85,7 @@ namespace PortfolioRisk.Core
                 FX = fx
             });
             
-            double ETL(double[][] scenarios)
+            static double ETL(double[][] scenarios)
                 => scenarios.Select(pv => pv.Last()).OrderBy(d => d)
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
                     .Average();
@@ -108,7 +108,7 @@ namespace PortfolioRisk.Core
                 FX = fx
             });
 
-            double MaxETL(double[][] scenarios)
+            static double MaxETL(double[][] scenarios)
                 => scenarios.Select(pv => pv.Min()).OrderBy(d => d)
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
                     .Average();
@@ -168,17 +168,17 @@ namespace PortfolioRisk.Core
                         });
                         break;
                     }
-                    default:
-                        throw new ArgumentOutOfRangeException();
                     case AssetCurrency.USD_TO_CAD:
-                        throw new ArgumentException("Wrong asset type.");   
+                        throw new ArgumentException("Wrong asset type.");
+                    default:
+                        throw new ArgumentOutOfRangeException($"Unknown type: {annotateAssetCurrency[asset]}");
                 }
             }
         }
         #endregion
 
         #region Helpers
-        private double[][] ElementWiseMultiply(double[][] pnl, double baseRate)
+        private static double[][] ElementWiseMultiply(double[][] pnl, double baseRate)
         {
             if (pnl.Length != PortfolioAnalyzer.SimulationIterations
                 || pnl.First().Length != HistoricalSimulation.YearReturnDays)
@@ -200,7 +200,7 @@ namespace PortfolioRisk.Core
 
             return result;
         }
-        private double[][] ElementWiseMultiply(double[][] pnl, double[][] exchangeRate, double currencyBaseRate)
+        private static double[][] ElementWiseMultiply(double[][] pnl, double[][] exchangeRate, double currencyBaseRate)
         {
             if (pnl.Length != exchangeRate.Length
                 || pnl.First().Length != exchangeRate.First().Length)

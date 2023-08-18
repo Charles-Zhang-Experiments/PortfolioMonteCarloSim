@@ -42,10 +42,10 @@ namespace PortfolioRisk.Core.DataSourceService
         }
         public AssetCurrency GetSymbolCurrency(AnalysisConfig config, string symbol)
         {
-            if (CurrencyMapping.ContainsKey(symbol))
-                return CurrencyMapping[symbol];
-            else if (config.CurrencyMapping.ContainsKey(symbol))
-                return config.CurrencyMapping[symbol];
+            if (CurrencyMapping.TryGetValue(symbol, out AssetCurrency value))
+                return value;
+            else if (config.CurrencyMapping.TryGetValue(symbol, out value))
+                return value;
             throw new ArgumentException("Undefined symbol.");
         }
         #endregion
@@ -57,20 +57,18 @@ namespace PortfolioRisk.Core.DataSourceService
             var assembly = Assembly.GetCallingAssembly();
             string resourcePath = name;
             // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
-            if (!name.StartsWith(nameof(Parcel)))
+            if (!name.StartsWith(nameof(PortfolioRisk)))
             {
                 resourcePath = assembly.GetManifestResourceNames()
                     .Single(str => str.EndsWith(name));
             }
 
-            using (Stream stream = assembly.GetManifestResourceStream(resourcePath))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
+            using Stream stream = assembly.GetManifestResourceStream(resourcePath);
+            using StreamReader reader = new(stream);
+            return reader.ReadToEnd();
         }
         private string RemapSymbols(string original)
-            => FilenameRemapping.ContainsKey(original) ? FilenameRemapping[original] : original;
+            => FilenameRemapping.TryGetValue(original, out string value) ? value : original;
         #endregion
     }
 }
