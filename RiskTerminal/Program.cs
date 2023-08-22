@@ -6,6 +6,45 @@ using PortfolioRisk.Core.DataTypes;
 
 namespace RiskTerminal
 {
+    internal class RunConfig
+    {
+        #region Properties
+        public double? TotalAllocation { get; set; }
+        public List<string> Assets { get; set; }
+        public List<string> AssetCurrencies { get; set; }
+        public List<double> Weights { get; set; }
+        public List<string> Factors { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        #endregion
+
+        #region Accessor
+        public Dictionary<string, AssetCurrency> CurrencyMapping =>
+            Assets.Zip(AssetCurrencies).ToDictionary(p => p.First, p => p.Second);
+        #endregion
+
+        #region Helpers
+        public bool ContainsMissingValue(out IEnumerable<string> missingAttributes)
+        {
+            // Automatically get all defined and thus required parameters for the configuration
+            // and check whether any property is missing proper values
+            missingAttributes = GetType()
+                .GetProperties()
+                .Where(p => (p.GetValue(this) ?? null) == null)
+                .Select(p => p.Name);
+            return GetType()
+                .GetProperties()
+                .Select(p => p.GetValue(this) ?? null)
+                .Any(v => v == null);
+        }
+        public void NormalizeWeights()
+        {
+            double total = Weights.Sum();
+            Weights = Weights.Select(w => w / total).ToList();
+        }
+        #endregion
+    }
+
     class Program
     {
         private enum ArgumentParseMode
@@ -43,7 +82,7 @@ namespace RiskTerminal
                 RunSample();
             else
             {
-                AnalysisConfig parameters = new();
+                RunConfig parameters = new();
 
                 ArgumentParseMode parseMode = ArgumentParseMode._Undetermined;
                 // Enumerate and parse the arguments using a state machine
@@ -60,7 +99,7 @@ namespace RiskTerminal
                             break;
                         case "-c":
                             parseMode = ArgumentParseMode.AssetCurrencies;
-                            parameters.AssetCurrencies = new List<AssetCurrency>();
+                            parameters.AssetCurrencies = new List<string>();
                             break;
                         case "-w":
                             parseMode = ArgumentParseMode.Weights;
@@ -90,7 +129,7 @@ namespace RiskTerminal
                                     parameters.Assets.Add(arg.ToUpper());
                                     break;
                                 case ArgumentParseMode.AssetCurrencies:
-                                    parameters.AssetCurrencies.Add(Enum.Parse<AssetCurrency>(arg.ToUpper()));
+                                    parameters.AssetCurrencies.Add(arg.ToUpper());
                                     break;
                                 case ArgumentParseMode.Factors:
                                     parameters.Factors.Add(arg.ToUpper());
@@ -118,19 +157,19 @@ namespace RiskTerminal
         static void RunSample()
         {
             Console.WriteLine("Run sample data sets.");
-            Run(new AnalysisConfig()
+            Run(new RunConfig()
             {
                 Weights = new List<double> { 1, 1 },
                 TotalAllocation = 2000000000,   // In CAD
                 Assets = new List<string> { "SPY", "XIU" },
-                AssetCurrencies = new List<AssetCurrency>{ AssetCurrency.USD, AssetCurrency.CAD },
+                AssetCurrencies = new List<string>{ "USD", "CAD" },
                 Factors = new List<string> { "SPY", "XIU", "USD/CAD" },
                 StartDate = new DateTime(2017, 1, 1),
                 EndDate = new DateTime(2021, 12, 31)
             });
         }
 
-        static void Run(AnalysisConfig config)
+        static void Run(RunConfig config)
         {
             // Check for missing inputs parameters
             if (config.ContainsMissingValue(out _))

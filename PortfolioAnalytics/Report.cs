@@ -79,7 +79,7 @@ namespace PortfolioRisk.Core.DataTypes
         /// <summary>
         /// Original size of investment as categorized by currency
         /// </summary>
-        public Dictionary<AssetCurrency, double> CurrencySize { get; set; }
+        public Dictionary<string, double> CurrencySize { get; set; }
         public DateTime PriceDate { get; set; }
         #endregion
 

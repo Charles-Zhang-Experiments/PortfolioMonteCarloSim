@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using PortfolioRisk.Core.DataTypes;
-
-namespace PortfolioRisk.Core
+﻿namespace PortfolioAnalytics
 {
     public class AnalysisConfig
     {
@@ -32,7 +27,7 @@ namespace PortfolioRisk.Core
                 .Where(p => (p.GetValue(this) ?? null) == null)
                 .Select(p => p.Name);
             return GetType()
-                .GetProperties() 
+                .GetProperties()
                 .Select(p => p.GetValue(this) ?? null)
                 .Any(v => v == null);
         }

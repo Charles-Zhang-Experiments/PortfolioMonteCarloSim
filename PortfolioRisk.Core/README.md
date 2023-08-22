@@ -1,3 +1,3 @@
 ﻿# Portfolio Risk (Core)
 
-(PENDING)
+Provides simulation related functionalities. DO NOT include analytics.

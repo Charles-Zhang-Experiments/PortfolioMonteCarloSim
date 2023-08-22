@@ -60,13 +60,13 @@
             ApplicationState.Assets = new HashSet<AssetDefinition>();
             ApplicationState.Factors = new HashSet<AssetDefinition>();
         
-            ApplicationState.AddPortfolioAsset(new AssetDefinition("SPY", AssetCurrency.USD, 1));
-            ApplicationState.AddPortfolioAsset(new AssetDefinition("XIU", AssetCurrency.CAD, 1));
+            ApplicationState.AddPortfolioAsset(new AssetDefinition("SPY", "USD", 1));
+            ApplicationState.AddPortfolioAsset(new AssetDefinition("XIU", "CAD", 1));
         }
     }
     private void AddEntry()
     {
-        ApplicationState.AddPortfolioAsset(new AssetDefinition("Asset Name", AssetCurrency.CAD, 1));
+        ApplicationState.AddPortfolioAsset(new AssetDefinition("Asset Name", "CAD", 1));
         UpperTextsCases();
     }
 

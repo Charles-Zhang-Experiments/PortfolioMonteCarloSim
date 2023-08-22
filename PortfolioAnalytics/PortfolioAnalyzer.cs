@@ -1,17 +1,13 @@
-﻿using Parcel.Shared.DataTypes;
-using PortfolioRisk.Core.DataSourceService;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using PortfolioRisk.Core.Algorithm;
-using PortfolioRisk.Core.DataTypes;
+﻿using PortfolioRisk.Core.DataTypes;
+using PortfolioRisk.Core.DataSourceService.LowLevelFetchers;
+using PortfolioAnalytics;
 
 namespace PortfolioRisk.Core
 {
     public class PortfolioAnalyzer
     {
         #region State
-        public Dictionary<string, List<TimeSeries>> TimeSeries { get; private set; }
+        public Dictionary<string, List<TimePoint>> TimeSeries { get; private set; }
         public List<Dictionary<string, double[]>> TotalReturns { get; private set; }
         #endregion
 
@@ -36,7 +32,7 @@ namespace PortfolioRisk.Core
             config.NormalizeWeights();
 
             // Fetch time series data
-            Dictionary<string, DataGrid> originalTimeSeries = PopulateTimeSeries(config);
+            Dictionary<string, TimeSeries> originalTimeSeries = PopulateTimeSeries(config);
 
             // Yahoo Finance returns data with incomplete entries and sometimes wrong range of date;
             // So we need to pre-process and clean data
@@ -46,13 +42,13 @@ namespace PortfolioRisk.Core
         public void Stage2()
         {
             // Perform the actual simulation and analysis
-            HistoricalSimulation simulator = new HistoricalSimulation(TimeSeries);
+            BatchHistoricalSimulation simulator = new BatchHistoricalSimulation(TimeSeries);
             TotalReturns = Enumerable.Range(0, SimulationIterations)
                 .AsParallel().Select(_ => simulator.SimulateOnce()).ToList();
 
             // Validation Assert
             if (TotalReturns.Count() != SimulationIterations ||
-                TotalReturns.Any(r => r.Values.First().Count() != HistoricalSimulation.YearReturnDays))
+                TotalReturns.Any(r => r.Values.First().Count() != BatchHistoricalSimulation.YearReturnDays))
                 throw new InvalidOperationException("Unexpected simulation outcome.");
         }
         public Report Stage3(AnalysisConfig config)
@@ -73,9 +69,9 @@ namespace PortfolioRisk.Core
         #endregion
 
         #region Routines
-        private Dictionary<string, DataGrid> PopulateTimeSeries(AnalysisConfig config)
+        private Dictionary<string, TimeSeries> PopulateTimeSeries(AnalysisConfig config)
         {
-            Dictionary<string, DataGrid> timeSeries = new Dictionary<string, DataGrid>();
+            Dictionary<string, TimeSeries> timeSeries = new(0;
             foreach (string symbol in config.Assets.Union(config.Factors))
             {
                 if (timeSeries.ContainsKey(symbol)) continue;
@@ -98,7 +94,7 @@ namespace PortfolioRisk.Core
             date = priceDate;
             return currentPrices;
         }
-        private Dictionary<string, List<TimeSeries>> CleanupData(Dictionary<string, DataGrid> originalTimeSeries)
+        private Dictionary<string, List<TimePoint>> CleanupData(Dictionary<string, DataGrid> originalTimeSeries)
         {
             #region Preprocessing Logic
             // Intersect dates and find minimally shared range of date sequence
@@ -121,14 +117,14 @@ namespace PortfolioRisk.Core
                     }).OrderBy(dt => dt).ToArray();
                 return GetWorkDays(intersection.Min(), intersection.Max());
             }
-            Dictionary<string, List<TimeSeries>> FillMissingEntries()
+            Dictionary<string, List<TimePoint>> FillMissingEntries()
             {
-                Dictionary<string, List<TimeSeries>> cleanData =
-                    new Dictionary<string, List<TimeSeries>>();
+                Dictionary<string, List<TimePoint>> cleanData =
+                    new Dictionary<string, List<TimePoint>>();
                 foreach ((string ticker, DataGrid table) in originalTimeSeries)
                 {
                     // Extract existing time series
-                    List<TimeSeries> timeSeries = GetTimeSeries(table);
+                    List<TimePoint> timeSeries = GetTimeSeries(table);
 
                     // Back/Forward-fill if needed
                     PerformBackFill(timeSeries, ticker);
@@ -139,15 +135,15 @@ namespace PortfolioRisk.Core
 
                 return cleanData;
             }
-            static List<TimeSeries> GetTimeSeries(DataGrid table)
+            static List<TimePoint> GetTimeSeries(DataGrid table)
             {
                 IEnumerable<DateTime> dateColumn = table.Columns.First().GetDataAs<DateTime>();
                 IEnumerable<double> adjustedCloseColumn = table.Columns[AdjustedCloseColumnIndex].GetDataAs<double>();
-                List<TimeSeries> timeSeries = dateColumn.Zip(adjustedCloseColumn)
-                    .Select(tuple => new TimeSeries(tuple.First, tuple.Second)).ToList();
+                List<TimePoint> timeSeries = dateColumn.Zip(adjustedCloseColumn)
+                    .Select(tuple => new TimePoint(tuple.First, tuple.Second)).ToList();
                 return timeSeries;
             }
-            void PerformBackFill(List<TimeSeries> timeSeries, string ticker)
+            void PerformBackFill(List<TimePoint> timeSeries, string ticker)
             {
                 foreach (DateTime weekday in weekDays)
                 {
@@ -156,10 +152,10 @@ namespace PortfolioRisk.Core
 
                     Console.WriteLine($"{ticker} missing entry for date: {weekday:yyyy-MM-dd}"); // Report missing entries
 
-                    if (FindSuitableFillinDate(timeSeries, weekday, out TimeSeries? substitute, out int index))
+                    if (FindSuitableFillinDate(timeSeries, weekday, out TimePoint? substitute, out int index))
                     {
                         Console.WriteLine($"Back-fill with: {substitute!.Value.Date:yyyy-MM-dd}");
-                        timeSeries.Insert(index, new TimeSeries(weekday, substitute!.Value.Value));
+                        timeSeries.Insert(index, new TimePoint(weekday, substitute!.Value.Value));
                     }
                     else throw new InvalidOperationException($"Cannot back-fill time series for {ticker}!");
                 }
@@ -177,13 +173,13 @@ namespace PortfolioRisk.Core
         /// <summary>
         /// Automatically handle conversion of common names and interest rate
         /// </summary>
-        private DataGrid PreprocessAndFetchSymbol(string originalSymbol, AnalysisConfig config)
+        private TimeSeries PreprocessAndFetchSymbol(string originalSymbol, AnalysisConfig config)
         {
             SymbolDefinition symbol = new SymbolDefinition()
             {
-                Name = originalSymbol,
-                QueryStartDate = config.StartDate!.Value,
-                QueryEndDate = config.EndDate!.Value
+                TickerName = originalSymbol,
+                TimeSeriesStartDate = config.StartDate!.Value,
+                TimeSeriesEndDate = config.EndDate!.Value
             };
             IDataSourceProvider provider = GetHandling(originalSymbol);
             return provider.GetSymbol(symbol);
@@ -193,9 +189,9 @@ namespace PortfolioRisk.Core
         {
             SymbolDefinition query = new SymbolDefinition()
             {
-                Name = symbol,
-                QueryStartDate = DateTime.Now.Date.AddDays(-2),
-                QueryEndDate = DateTime.Now.Date.AddDays(1)
+                TickerName = symbol,
+                TimeSeriesStartDate = DateTime.Now.Date.AddDays(-2),
+                TimeSeriesEndDate = DateTime.Now.Date.AddDays(1)
             };
             DataGrid table = new YahooFinanceHelper().GetSymbol(query);
 
@@ -226,13 +222,13 @@ namespace PortfolioRisk.Core
         /// Given a target date (that's absent in a given time series) and a reference,
         /// find the most suitable entry to back-fill data for that date
         /// </summary>
-        private bool FindSuitableFillinDate(List<TimeSeries> timeSeries, DateTime weekday, out TimeSeries? valueTuple, out int index)
+        private bool FindSuitableFillinDate(List<TimePoint> timeSeries, DateTime weekday, out TimePoint? valueTuple, out int index)
         {
             // Strategy: First try to fill from a previously available date
             // If that is not available, try to fill from the next available date
             // If both fails, return false
 
-            TimeSeries[] pastData = timeSeries.Where(ts => ts.Date <= weekday).ToArray();
+            TimePoint[] pastData = timeSeries.Where(ts => ts.Date <= weekday).ToArray();
             if (pastData.Count() != 0)
             {
                 valueTuple = pastData.Last();
@@ -240,7 +236,7 @@ namespace PortfolioRisk.Core
                 return true;
             }
             
-            TimeSeries[] futureData = timeSeries.Where(ts => ts.Date >= weekday).ToArray();
+            TimePoint[] futureData = timeSeries.Where(ts => ts.Date >= weekday).ToArray();
             if (futureData.Count() != 0)
             {
                 valueTuple = futureData.First();
@@ -255,12 +251,12 @@ namespace PortfolioRisk.Core
 
         private static IDataSourceProvider GetHandling(string symbol)
         {
-            // Offline sources
-            if (OfflineSourceHelper.OfflineSources.Contains(symbol))
+            // Example sources
+            if (OfflineExamplesHelper.OfflineSources.Contains(symbol))
             {
-                return new OfflineSourceHelper();
+                return new OfflineExamplesHelper();
             }
-            // Interest rates
+            // Exxchange rates
             else if (symbol.Contains('/'))
             {
                 throw new NotImplementedException();

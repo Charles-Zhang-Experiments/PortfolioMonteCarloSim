@@ -31,7 +31,7 @@ else
         </button>
         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
             <button class="dropdown-item" @onclick="@(()=>SwitchDisplay("All Symbols"))">All Symbols</button>
-            @foreach ((string symbol, List<TimeSeries> _) in ApplicationState.PortfolioAnalyzer.TimeSeries)
+            @foreach ((string symbol, List<PortfolioRisk.Core.DataTypes.TimePoint> _) in ApplicationState.PortfolioAnalyzer.TimeSeries)
             {
                 <button class="dropdown-item" @onclick="() => SwitchDisplay(symbol)">@symbol</button>
             }
@@ -162,15 +162,15 @@ else
         };
         return config;
     }
-    LineConfig PopulateTimeSeries(LineConfig config, Dictionary<string, List<TimeSeries>> series)
+    LineConfig PopulateTimeSeries(LineConfig config, Dictionary<string, List<PortfolioRisk.Core.DataTypes.TimePoint>> series)
     {
         DateTime[] timeColumn = null;
-        foreach ((string symbol, List<TimeSeries> timeSeries) in series)
+        foreach ((string symbol, List<PortfolioRisk.Core.DataTypes.TimePoint> timeSeries) in series)
         {
             if (_displayToggle != null && symbol != _displayToggle) continue;
                 
             timeColumn ??= timeSeries.Select(ts => ts.Date).ToArray();
-            IDataset<TimePoint> timePoints = new LineDataset<TimePoint>()
+                IDataset<ChartJs.Blazor.Common.Time.TimePoint> timePoints = new LineDataset<ChartJs.Blazor.Common.Time.TimePoint>()
             {
                 Label = $"{symbol} ({GetCurrency(symbol)})",
                 BackgroundColor = ColorUtil.FromDrawingColor(Color.SeaGreen),
@@ -180,8 +180,8 @@ else
             double[] data = timeSeries.Select(ts => Math.Round(ts.Value, 4)).ToArray();
             for (int t = 0; t < timeColumn.Length; t++)
             {
-                DateTime time = timeColumn[t];
-                timePoints.Add(new TimePoint(time, data[t]));
+                    DateTime time = timeColumn[t];
+                timePoints.Add(new ChartJs.Blazor.Common.Time.TimePoint(time, data[t]));
             }
 
             config.Data.Datasets.Add(timePoints);

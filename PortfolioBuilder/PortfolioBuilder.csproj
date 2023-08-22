@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\PortfolioAnalytics\PortfolioAnalytics.csproj" />
       <ProjectReference Include="..\PortfolioRisk.Core\PortfolioRisk.Core.csproj" />
     </ItemGroup>
 
