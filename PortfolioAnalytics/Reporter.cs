@@ -22,7 +22,7 @@ namespace PortfolioAnalytics
         #endregion
 
         #region Public Interface Method
-        public Report BuildReport(AnalysisConfig config,
+        public Report BuildReport(PortfolioConfiguration config,
             Dictionary<string, AssetCurrency> annotateAssetCurrency, PortfolioAnalyzer analyzer)
         {
             Report report = new Report(CurrentPrices, PriceDate) { Analyzer = analyzer };
@@ -34,7 +34,7 @@ namespace PortfolioAnalytics
 
             return report;
         }
-        public string AnnounceReport(AnalysisConfig config, Report report)
+        public string AnnounceReport(PortfolioConfiguration config, Report report)
         {
             // Basic stats
             return report.BuildSummaryText();
@@ -42,7 +42,7 @@ namespace PortfolioAnalytics
         #endregion
 
         #region Routines
-        private static void ComputeOriginalInvestmentSize(AnalysisConfig config, Report report)
+        private static void ComputeOriginalInvestmentSize(PortfolioConfiguration config, Report report)
         {
             // Size of each asset
             report.InvestmentSize = report.PortfolioReturn.ToDictionary(
@@ -64,7 +64,7 @@ namespace PortfolioAnalytics
                         .Select(i => i.Value).Sum());
             }
         }
-        private void ComputeETL(AnalysisConfig config, Report report)
+        private void ComputeETL(PortfolioConfiguration config, Report report)
         {
             report.ETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
                 ETL(pnl.Values) / CurrentPrices[pnl.Asset] * report.InvestmentSize[pnl.Asset]);
@@ -87,7 +87,7 @@ namespace PortfolioAnalytics
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
                     .Average();
         }
-        private void ComputeMaxETL(AnalysisConfig config, Report report)
+        private void ComputeMaxETL(PortfolioConfiguration config, Report report)
         {
             report.MaxETL = report.PortfolioReturn.ToDictionary(pnl => pnl.Asset, pnl =>
                 MaxETL(pnl.Values) / CurrentPrices[pnl.Asset] * config.TotalAllocation!.Value * config.Weights[config.Assets.IndexOf(pnl.Asset)]);
@@ -110,7 +110,7 @@ namespace PortfolioAnalytics
                     .Take(PortfolioAnalyzer.ETLWorstCaseTake)
                     .Average();
         }
-        private void NormalizeCurrencyForPnL(AnalysisConfig analysisConfig, IReadOnlyDictionary<string, AssetCurrency> annotateAssetCurrency, Report report)
+        private void NormalizeCurrencyForPnL(PortfolioConfiguration analysisConfig, IReadOnlyDictionary<string, AssetCurrency> annotateAssetCurrency, Report report)
         {
             foreach (string asset in analysisConfig.Assets)
             {
